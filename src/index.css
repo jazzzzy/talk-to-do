@@ -27,6 +27,8 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
+  background-color: #0f0c29; /* Matches the dark app theme for status bar immersion */
+  color: #ffffff;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
