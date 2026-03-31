@@ -61,8 +61,18 @@ Add the following secrets to your GitHub repository under **Settings > Secrets a
 - `VITE_FIREBASE_API_KEY`: Your Firebase API key.
 - ... and other `VITE_FIREBASE_` variables found in your `.env`.
 
-### 2. Security Rules
-Ensure your **Firestore Security Rules** are deployed to protect your data. See [firestore.rules](./firestore.rules).
+### 2. Firestore Security Rules
+Ensure strict access control by deploying [firestore.rules](./firestore.rules). These rules enforce:
+- **Ownership:** Users can only access their own data.
+- **Data Validation:** Correct types and required fields for all tasks.
+
+### 3. Firebase Hosting Security
+Enhanced via [firebase.json](./firebase.json) with custom headers:
+- **Content Security Policy (CSP):** Trusted source enforcement.
+- **HSTS / Frame Options:** Protection against Clickjacking and MITM attacks.
+
+### 4. Security Audit (v1.0-sec)
+The project has been hardened with zero dependency vulnerabilities (audited and patched via `npm overrides`) and full environment isolation.
 
 ## 📂 Project Structure
 ```

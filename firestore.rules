@@ -3,11 +3,31 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /tasks/{taskId} {
-      // Allow Read/Update/Delete only if the user is authenticated and owns the document.
-      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Allow Read/Delete only if the user is authenticated and owns the document.
+      allow read, delete: if request.auth != null && request.auth.uid == resource.data.userId;
       
-      // Allow Create only if the user is authenticated and the userId matches their UID.
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // Allow Create only if:
+      // 1. User is authenticated.
+      // 2. The userId matches their UID.
+      // 3. Schema validation: title (string, 1-200), status (pending/completed), dueDate (string).
+      allow create: if request.auth != null 
+                    && request.auth.uid == request.resource.data.userId
+                    && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 200
+                    && request.resource.data.status in ['pending', 'completed']
+                    && request.resource.data.dueDate is string && request.resource.data.dueDate.size() > 0
+                    && request.resource.data.createdAt is int;
+
+      // Allow Update only if:
+      // 1. User owns the document.
+      // 2. Ownership (userId) is not being changed.
+      // 3. Schema validation for new data.
+      allow update: if request.auth != null 
+                    && request.auth.uid == resource.data.userId
+                    && request.resource.data.userId == resource.data.userId
+                    && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 200
+                    && request.resource.data.status in ['pending', 'completed']
+                    && request.resource.data.dueDate is string && request.resource.data.dueDate.size() > 0;
     }
   }
 }
+
