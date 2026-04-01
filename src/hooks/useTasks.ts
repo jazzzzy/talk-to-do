@@ -7,6 +7,7 @@ import {
   deleteTask as repoDelete,
 } from '@/lib/taskRepository'
 import type { Task } from '@/types/task'
+import type { DisplayTask } from '@/types/calendarEvent'
 
 /* ─── Timezone-safe "today" ─────────────────────────────────── */
 
@@ -20,17 +21,30 @@ function getLocalToday(): string {
   return new Date().toLocaleDateString('en-CA')
 }
 
+/** Convert a user Task into a unified DisplayTask. */
+function taskToDisplayTask(task: Task): DisplayTask {
+  return {
+    id: task.id,
+    title: task.title,
+    dueDate: task.dueDate,
+    status: task.status,
+    createdAt: task.createdAt,
+    source: 'user',
+    readOnly: false,
+  }
+}
+
 /* ─── Hook return type ──────────────────────────────────────── */
 
 export interface UseTasksReturn {
-  // Raw + derived views
-  allTasks: Task[]
-  todayTasks: Task[]
-  upcomingTasks: Task[]
-  overdueTasks: Task[]
+  // Raw + derived views (now DisplayTask to support family events)
+  allTasks: DisplayTask[]
+  todayTasks: DisplayTask[]
+  upcomingTasks: DisplayTask[]
+  overdueTasks: DisplayTask[]
   loading: boolean
   error: Error | null
-  // CRUD operations bound to the current user
+  // CRUD operations bound to the current user (only for user-created tasks)
   addTask: (title: string, dueDate: string) => Promise<void>
   toggleTaskStatus: (taskId: string, currentStatus: Task['status']) => Promise<void>
   deleteTask: (taskId: string) => Promise<void>
@@ -38,16 +52,20 @@ export interface UseTasksReturn {
 
 /* ─── useTasks ──────────────────────────────────────────────── */
 
-export function useTasks(): UseTasksReturn {
+/**
+ * @param familyDisplayTasks — optional array of family events (as DisplayTasks)
+ *   to merge into the task views. Pass from useCalendarEvents().displayTasks.
+ */
+export function useTasks(familyDisplayTasks: DisplayTask[] = []): UseTasksReturn {
   const { user } = useAuth()
-  const [allTasks, setAllTasks] = useState<Task[]>([])
-  const [loading, setLoading]   = useState(true)
-  const [error, setError]       = useState<Error | null>(null)
+  const [rawTasks, setRawTasks]   = useState<Task[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState<Error | null>(null)
 
   // Subscribe to real-time Firestore updates for the current user's tasks.
   useEffect(() => {
     if (!user) {
-      setAllTasks([])
+      setRawTasks([])
       setLoading(false)
       return
     }
@@ -59,7 +77,7 @@ export function useTasks(): UseTasksReturn {
       (tasks) => {
         // Sort client-side: newest first
         const sorted = [...tasks].sort((a, b) => b.createdAt - a.createdAt)
-        setAllTasks(sorted)
+        setRawTasks(sorted)
         setLoading(false)
       },
       (err) => {
@@ -72,21 +90,33 @@ export function useTasks(): UseTasksReturn {
     return unsubscribe // Cleanup on unmount or user change
   }, [user])
 
+  // Merge user tasks + family events into a unified DisplayTask array
+  const allTasks: DisplayTask[] = useMemo(() => {
+    const userDisplayTasks = rawTasks.map(taskToDisplayTask)
+    const merged = [...userDisplayTasks, ...familyDisplayTasks]
+    // Sort by dueDate ascending, then by createdAt descending
+    return merged.sort((a, b) => {
+      const dateCompare = a.dueDate.localeCompare(b.dueDate)
+      if (dateCompare !== 0) return dateCompare
+      return b.createdAt - a.createdAt
+    })
+  }, [rawTasks, familyDisplayTasks])
+
   // Derive the three filtered views. useMemo ensures these only recompute
   // when `allTasks` changes, not on every render.
   const today = getLocalToday()
 
-  const todayTasks: Task[] = useMemo(
+  const todayTasks: DisplayTask[] = useMemo(
     () => allTasks.filter((t) => t.dueDate === today),
     [allTasks, today],
   )
 
-  const upcomingTasks: Task[] = useMemo(
+  const upcomingTasks: DisplayTask[] = useMemo(
     () => allTasks.filter((t) => t.dueDate > today),
     [allTasks, today],
   )
 
-  const overdueTasks: Task[] = useMemo(
+  const overdueTasks: DisplayTask[] = useMemo(
     () => allTasks.filter((t) => t.dueDate < today && t.status === 'pending'),
     [allTasks, today],
   )

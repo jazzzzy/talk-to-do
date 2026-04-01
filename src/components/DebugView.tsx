@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTasks } from '@/hooks/useTasks'
-import type { Task } from '@/types/task'
+import type { DisplayTask } from '@/types/calendarEvent'
 
 /* ─── Helpers ────────────────────────────────────────────────── */
 
@@ -11,7 +11,7 @@ function getLocalToday(): string {
 /* ─── Task Row ───────────────────────────────────────────────── */
 
 interface TaskRowProps {
-  task: Task
+  task: DisplayTask
   onToggle: () => void
   onDelete: () => void
 }
@@ -57,9 +57,9 @@ function TaskRow({ task, onToggle, onDelete }: TaskRowProps) {
 interface SectionProps {
   label: string
   emoji: string
-  tasks: Task[]
+  tasks: DisplayTask[]
   accent: string
-  onToggle: (id: string, status: Task['status']) => void
+  onToggle: (id: string, status: DisplayTask['status']) => void
   onDelete: (id: string) => void
 }
 
@@ -119,7 +119,7 @@ export default function DebugView() {
     }
   }
 
-  const handleToggle = async (id: string, status: Task['status']) => {
+  const handleToggle = async (id: string, status: DisplayTask['status']) => {
     try {
       await toggleTaskStatus(id, status)
     } catch (err) {

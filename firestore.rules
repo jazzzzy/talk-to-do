@@ -28,6 +28,28 @@ service cloud.firestore {
                     && request.resource.data.status in ['pending', 'completed']
                     && request.resource.data.dueDate is string && request.resource.data.dueDate.size() > 0;
     }
+
+    // Phase 5: Family calendar events (written by Cloud Functions, read by clients)
+    match /calendarEvents/{eventId} {
+      // Users can read their own synced events
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+
+      // Users can update the mirroredToGcal flag on their own events
+      allow update: if request.auth != null 
+                    && request.auth.uid == resource.data.userId
+                    && request.resource.data.userId == resource.data.userId
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['mirroredToGcal']);
+
+      // Only Cloud Functions (Admin SDK) can create/delete — no client write rules
+      allow create, delete: if false;
+    }
+
+    // Phase 5: User settings (calendar URL, preferences)
+    match /userSettings/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null 
+                   && request.auth.uid == userId
+                   && request.resource.data.userId == userId;
+    }
   }
 }
-

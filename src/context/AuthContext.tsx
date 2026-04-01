@@ -9,6 +9,7 @@ import {
   onAuthStateChanged,
   signInWithPopup,
   signOut as firebaseSignOut,
+  GoogleAuthProvider as GoogleAuthProviderClass,
   type User,
 } from 'firebase/auth'
 import { auth, googleProvider } from '@/firebase'
@@ -27,6 +28,8 @@ const MOCK_USER: Partial<User> = {
 interface AuthContextValue {
   user: User | null
   loading: boolean
+  /** Google OAuth access token (available only for the current session). */
+  googleAccessToken: string | null
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -38,8 +41,9 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 /* ─── Provider ──────────────────────────────────────────────── */
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser]       = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser]                         = useState<User | null>(null)
+  const [loading, setLoading]                   = useState(true)
+  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null)
 
   useEffect(() => {
     // If VITE_MOCK_AUTH is enabled, bypass Firebase and use the dummy user.
@@ -62,7 +66,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(MOCK_USER as User)
       return
     }
-    await signInWithPopup(auth, googleProvider)
+
+    // Request Google Calendar scope so we can mirror family events
+    googleProvider.addScope('https://www.googleapis.com/auth/calendar.events')
+
+    const result = await signInWithPopup(auth, googleProvider)
+
+    // Capture the Google OAuth access token for GCal API calls
+    const credential = GoogleAuthProviderClass.credentialFromResult(result)
+    if (credential?.accessToken) {
+      setGoogleAccessToken(credential.accessToken)
+    }
   }
 
   const signOut = async () => {
@@ -70,11 +84,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null)
       return
     }
+    setGoogleAccessToken(null)
     await firebaseSignOut(auth)
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, loading, googleAccessToken, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   )

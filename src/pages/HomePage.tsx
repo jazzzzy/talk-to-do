@@ -1,19 +1,31 @@
 import { useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useTasks } from '@/hooks/useTasks'
+import { useCalendarEvents } from '@/hooks/useCalendarEvents'
+import { useGoogleCalendarSync } from '@/hooks/useGoogleCalendarSync'
 import MainLayout from '@/layout/MainLayout'
 import TaskCard from '@/components/TaskCard'
 import AddTaskModal from '@/components/AddTaskModal'
+import SettingsModal from '@/components/SettingsModal'
 import EmptyState from '@/components/EmptyState'
 import type { ActiveView } from '@/components/BottomNav'
-import type { Task } from '@/types/task'
+import type { DisplayTask } from '@/types/calendarEvent'
 
 /**
  * HomePage — Unified TaskFlow interface.
  * Merges Today and Upcoming into a single screen with a separator.
+ * Family calendar events appear inline with a purple badge.
  */
 export default function HomePage() {
   const { user, signOut } = useAuth()
+
+  // Family calendar events
+  const { events: familyEvents, displayTasks: familyDisplayTasks } = useCalendarEvents()
+
+  // Mirror new family events to Google Calendar (client-side)
+  useGoogleCalendarSync(familyEvents)
+
+  // Pass family display tasks into useTasks for merged views
   const {
     todayTasks,
     upcomingTasks,
@@ -23,19 +35,24 @@ export default function HomePage() {
     addTask,
     toggleTaskStatus,
     deleteTask,
-  } = useTasks()
+  } = useTasks(familyDisplayTasks)
 
-  const [activeView, setActiveView]   = useState<ActiveView>('tasks')
-  const [modalOpen, setModalOpen]     = useState(false)
+  const [activeView, setActiveView]     = useState<ActiveView>('tasks')
+  const [modalOpen, setModalOpen]       = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   /* ── Handlers ───────────────────────────────────────────── */
-  const handleToggle = async (id: string, status: Task['status']) => {
-    try { await toggleTaskStatus(id, status) }
+  const handleToggle = async (task: DisplayTask) => {
+    // Family events are read-only — no toggle
+    if (task.readOnly) return
+    try { await toggleTaskStatus(task.id, task.status) }
     catch (e) { console.error('[HomePage] toggle error', e) }
   }
 
-  const handleDelete = async (id: string) => {
-    try { await deleteTask(id) }
+  const handleDelete = async (task: DisplayTask) => {
+    // Family events are read-only — no delete
+    if (task.readOnly) return
+    try { await deleteTask(task.id) }
     catch (e) { console.error('[HomePage] delete error', e) }
   }
 
@@ -62,8 +79,8 @@ export default function HomePage() {
                 <TaskCard
                   task={task}
                   index={i}
-                  onToggle={() => handleToggle(task.id, task.status)}
-                  onDelete={() => handleDelete(task.id)}
+                  onToggle={() => handleToggle(task)}
+                  onDelete={() => handleDelete(task)}
                 />
               </li>
             ))}
@@ -88,8 +105,8 @@ export default function HomePage() {
                 <TaskCard
                   task={task}
                   index={hasToday ? i + todayTasks.length : i}
-                  onToggle={() => handleToggle(task.id, task.status)}
-                  onDelete={() => handleDelete(task.id)}
+                  onToggle={() => handleToggle(task)}
+                  onDelete={() => handleDelete(task)}
                 />
               </li>
             ))}
@@ -111,8 +128,8 @@ export default function HomePage() {
             <TaskCard
               task={task}
               index={i}
-              onToggle={() => handleToggle(task.id, task.status)}
-              onDelete={() => handleDelete(task.id)}
+              onToggle={() => handleToggle(task)}
+              onDelete={() => handleDelete(task)}
             />
           </li>
         ))}
@@ -130,6 +147,7 @@ export default function HomePage() {
         onAddClick={() => setModalOpen(true)}
         overdueCount={overdueTasks.length}
         onSignOut={signOut}
+        onSettingsClick={() => setSettingsOpen(true)}
       >
         {/* Loading skeletons */}
         {loading && (
@@ -161,6 +179,11 @@ export default function HomePage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onAdd={handleAdd}
+      />
+
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
       />
     </>
   )

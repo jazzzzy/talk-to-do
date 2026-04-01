@@ -10,6 +10,7 @@ interface Props {
   onAddClick: () => void
   overdueCount: number
   onSignOut: () => void
+  onSettingsClick: () => void
 }
 
 /* ─── Greeting helpers ────────────────────────────────────── */
@@ -44,6 +45,7 @@ export default function MainLayout({
   onAddClick,
   overdueCount,
   onSignOut,
+  onSettingsClick,
 }: Props) {
   const { label, accent } = VIEW_META[activeView]
 
@@ -78,12 +80,26 @@ export default function MainLayout({
               {getGreeting(user?.displayName ?? null)}
             </span>
           </div>
-          <button
-            onClick={onSignOut}
-            className="glass-button rounded-xl px-3 py-1.5 text-white/40 text-[11px] font-bold uppercase tracking-wider cursor-pointer hover:text-white/70"
-          >
-            Sign out
-          </button>
+
+          {/* Settings + Sign out */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onSettingsClick}
+              className="glass-button rounded-xl w-8 h-8 flex items-center justify-center text-white/40 cursor-pointer hover:text-white/70 transition-colors"
+              aria-label="Open settings"
+            >
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+              </svg>
+            </button>
+            <button
+              onClick={onSignOut}
+              className="glass-button rounded-xl px-3 py-1.5 text-white/40 text-[11px] font-bold uppercase tracking-wider cursor-pointer hover:text-white/70"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
 
         <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.2em] pl-0.5">

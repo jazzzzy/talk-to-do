@@ -170,3 +170,34 @@ html, body, #root {
   animation: taskIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* ─── Phase 5: Family Calendar ──────────────────────────────── */
+
+/* Purple family badge pill */
+.family-badge {
+  background: rgba(168, 85, 247, 0.15);
+  color: rgba(192, 132, 252, 0.9);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+/* Subtle left-accent for family event cards */
+.family-card {
+  border-left: 2px solid rgba(168, 85, 247, 0.5) !important;
+}
+
+/* Shimmer animation on family badge hover */
+@keyframes familyShimmer {
+  0%   { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.family-badge:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(168, 85, 247, 0.15) 0%,
+    rgba(168, 85, 247, 0.3) 50%,
+    rgba(168, 85, 247, 0.15) 100%
+  );
+  background-size: 200% 100%;
+  animation: familyShimmer 1.5s ease infinite;
+}
+
