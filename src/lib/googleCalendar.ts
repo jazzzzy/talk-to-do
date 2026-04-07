@@ -13,6 +13,12 @@ const GCAL_FETCH_DAYS = 90
 
 /* ─── GCal Event fetch (Reverse Sync) ───────────────────────── */
 
+interface GCalCalendar {
+  id: string
+  summary: string
+  primary?: boolean
+}
+
 interface GCalListEvent {
   id: string
   summary?: string
@@ -24,98 +30,117 @@ interface GCalListEvent {
 }
 
 /**
- * Fetch upcoming events from the user's primary Google Calendar.
- * - Window: today → today + GCAL_FETCH_DAYS days.
- * - Excludes events created by TaskFlow itself (tagged taskflow-user / taskflow-family)
- *   to prevent duplicates alongside existing task and family event lists.
- * - Returns a DisplayTask[] with source 'google-calendar' and readOnly: true.
+ * Fetch upcoming events from ALL of the user's Google Calendars.
+ * - First fetches the calendar list, then events from each calendar in parallel.
+ * - Window: start-of-today → today + GCAL_FETCH_DAYS days.
+ * - Excludes events created by TaskFlow (tagged taskflow-user / taskflow-family)
+ *   to prevent duplicates alongside existing task/family event lists.
+ * - Returns a deduplicated DisplayTask[] with source 'google-calendar'.
  */
 export async function fetchGCalEvents(accessToken: string): Promise<DisplayTask[]> {
   const now = new Date()
-  const timeMin = now.toISOString()
+
+  // Use start-of-today (midnight local time) so events earlier today aren't excluded
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)
+  const timeMin = startOfToday.toISOString()
 
   const future = new Date(now)
   future.setDate(future.getDate() + GCAL_FETCH_DAYS)
   const timeMax = future.toISOString()
 
+  const headers = {
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  }
+
+  // ── Step 1: Get all calendars ──────────────────────────────
+  let calendars: GCalCalendar[] = []
+  try {
+    const calRes = await fetch(`${GCAL_API_BASE}/users/me/calendarList`, { headers })
+    if (!calRes.ok) {
+      if (calRes.status === 401) {
+        console.warn('[GCal] Access token expired during calendar list fetch.')
+        return []
+      }
+      console.error(`[GCal] Calendar list error ${calRes.status}`)
+      return []
+    }
+    const calData = await calRes.json() as { items?: GCalCalendar[] }
+    calendars = calData.items ?? []
+    console.log(`[GCal] Found ${calendars.length} calendar(s):`, calendars.map(c => c.summary))
+  } catch (err) {
+    console.error('[GCal] Network error fetching calendar list:', err)
+    return []
+  }
+
+  // ── Step 2: Fetch events from all calendars in parallel ────
   const params = new URLSearchParams({
     timeMin,
     timeMax,
-    singleEvents: 'true',   // Expand recurring events into individual instances
+    singleEvents: 'true',
     orderBy: 'startTime',
     maxResults: '250',
   })
 
-  try {
-    const response = await fetch(
-      `${GCAL_API_BASE}/calendars/primary/events?${params}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      },
-    )
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        console.warn('[GCal] Access token expired during reverse sync.')
-        return []
-      }
-      const body = await response.text()
-      console.error(`[GCal] Fetch error ${response.status}:`, body)
+  const fetchCalendarEvents = async (calId: string): Promise<GCalListEvent[]> => {
+    try {
+      const res = await fetch(
+        `${GCAL_API_BASE}/calendars/${encodeURIComponent(calId)}/events?${params}`,
+        { headers },
+      )
+      if (!res.ok) return []
+      const data = await res.json() as { items?: GCalListEvent[] }
+      return data.items ?? []
+    } catch {
       return []
     }
+  }
 
-    const data = await response.json() as { items?: GCalListEvent[] }
-    const items = data.items ?? []
+  const allItemArrays = await Promise.all(calendars.map(cal => fetchCalendarEvents(cal.id)))
+  const allItems = allItemArrays.flat()
 
-    const tasks: DisplayTask[] = []
+  console.log(`[GCal] Raw API returned ${allItems.length} total item(s) across all calendars`)
 
-    for (const item of items) {
-      if (!item.summary || !item.start) continue
+  // ── Step 3: Deduplicate and filter ────────────────────────
+  const seen = new Set<string>()
+  const tasks: DisplayTask[] = []
 
-      // Skip events we created from TaskFlow to avoid self-duplicates
-      const source = item.extendedProperties?.private?.source
-      if (source === 'taskflow-user' || source === 'taskflow-family') continue
+  for (const item of allItems) {
+    if (!item.summary || !item.start) continue
+    if (seen.has(item.id)) continue  // Deduplicate events that appear in multiple calendars
+    seen.add(item.id)
 
-      // Resolve date: all-day events have item.start.date; timed events use dateTime
-      const rawDate = item.start.date ?? item.start.dateTime
-      if (!rawDate) continue
-
-      // Extract 'YYYY-MM-DD' from either a plain date or an ISO datetime string
-      const dueDate = rawDate.slice(0, 10)
-
-      // Extract 'HH:MM' from dateTime if present
-      const startTime = item.start.dateTime
-        ? item.start.dateTime.slice(11, 16)
-        : undefined
-      const endTime = item.end?.dateTime
-        ? item.end.dateTime.slice(11, 16)
-        : undefined
-
-      tasks.push({
-        id: `gcal_${item.id}`,
-        title: item.summary.replace(/^[✅👨‍👩‍👧]\s*/, '').trim(), // Strip TaskFlow prefixes if somehow present
-        dueDate,
-        status: 'pending',
-        createdAt: now.getTime(),
-        source: 'google-calendar',
-        readOnly: true,
-        startTime,
-        endTime,
-        allDay: !item.start.dateTime,
-        location: item.location,
-      })
+    // Skip events we created from TaskFlow to avoid self-duplicates
+    const source = item.extendedProperties?.private?.source
+    if (source === 'taskflow-user' || source === 'taskflow-family') {
+      console.log(`[GCal] Skipping TaskFlow-created event: "${item.summary}"`)
+      continue
     }
 
-    console.log(`[GCal] Fetched ${tasks.length} external events (${GCAL_FETCH_DAYS}-day window)`)
-    return tasks
+    const rawDate = item.start.date ?? item.start.dateTime
+    if (!rawDate) continue
 
-  } catch (err) {
-    console.error('[GCal] Network error during reverse sync:', err)
-    return []
+    const dueDate = rawDate.slice(0, 10)
+    const startTime = item.start.dateTime ? item.start.dateTime.slice(11, 16) : undefined
+    const endTime   = item.end?.dateTime   ? item.end.dateTime.slice(11, 16)  : undefined
+
+    tasks.push({
+      id: `gcal_${item.id}`,
+      title: item.summary.replace(/^[✅👨‍👩‍👧]\s*/, '').trim(),
+      dueDate,
+      status: 'pending',
+      createdAt: now.getTime(),
+      source: 'google-calendar',
+      readOnly: true,
+      startTime,
+      endTime,
+      allDay: !item.start.dateTime,
+      location: item.location,
+    })
   }
+
+  console.log(`[GCal] Fetched ${tasks.length} external events (${GCAL_FETCH_DAYS}-day window)`)
+  return tasks
 }
 
 export interface GCalEventPayload {
