@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useTasks } from '@/hooks/useTasks'
 import { useCalendarEvents } from '@/hooks/useCalendarEvents'
@@ -28,7 +28,13 @@ export default function HomePage() {
   useGoogleCalendarSync(familyEvents)
 
   const { settings } = useUserSettings()
-  const gcalIds = settings?.googleCalendarIds || ['primary']
+  // useMemo stabilizes the array reference so useGoogleCalendarEvents's
+  // useEffect doesn't fire on every render (which caused ~150 API calls/minute)
+  const gcalIds = useMemo(
+    () => settings?.googleCalendarIds ?? ['primary'],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(settings?.googleCalendarIds)],
+  )
 
   // Pull events FROM Google Calendar into the app (reverse sync)
   const { gcalTasks } = useGoogleCalendarEvents(gcalIds)
