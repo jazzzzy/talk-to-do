@@ -89,8 +89,12 @@ export default function TaskCard({ task, onToggle, onDelete, index = 0 }: Props)
           {task.title}
         </p>
 
+        <p className={`text-xs mt-0.5 transition-colors duration-300 ${isCompleted ? 'text-white/15' : 'text-white/35'}`}>
+          {formatDueDate(task.dueDate)}
+        </p>
+
         {/* Source badge row for read-only events */}
-        {isReadOnly ? (
+        {isReadOnly && (
           <div className="mt-1">
             <EventBadge
               source={task.source}
@@ -98,10 +102,6 @@ export default function TaskCard({ task, onToggle, onDelete, index = 0 }: Props)
               location={task.location}
             />
           </div>
-        ) : (
-          <p className={`text-xs mt-0.5 transition-colors duration-300 ${isCompleted ? 'text-white/15' : 'text-white/35'}`}>
-            {formatDueDate(task.dueDate)}
-          </p>
         )}
       </div>
 
