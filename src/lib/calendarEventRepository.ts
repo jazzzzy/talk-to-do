@@ -32,10 +32,16 @@ export function subscribeToCalendarEvents(
   return onSnapshot(
     q,
     (snapshot) => {
-      const events: CalendarEvent[] = snapshot.docs.map((snap) => ({
-        id: snap.id,
-        ...(snap.data() as Omit<CalendarEvent, 'id'>),
-      }))
+      const events: CalendarEvent[] = snapshot.docs.map((snap) => {
+        const data = snap.data();
+        return {
+          id: snap.id,
+          ...data,
+          // Defensive defaults for missing or legacy fields
+          mirroredToGcal: data.mirroredToGcal ?? false,
+          createdAt: typeof data.createdAt === 'number' ? data.createdAt : Date.now(),
+        } as CalendarEvent;
+      });
       onData(events)
     },
     (err) => onError(err),

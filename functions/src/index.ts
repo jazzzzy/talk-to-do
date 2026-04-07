@@ -113,6 +113,8 @@ async function syncUserCalendar(
     const docRef = db.collection(EVENTS_COLLECTION).doc(docId);
     incomingUids.add(event.uid);
 
+    // We use server-side merge to avoid overwriting mirroredToGcal if it's already true
+    // but we MUST include userId and source so the client-side query finds them.
     batch.set(
       docRef,
       {
@@ -127,14 +129,19 @@ async function syncUserCalendar(
         description: event.description || null,
         source: "family-shared",
         readOnly: true,
-        mirroredToGcal: false,
         lastSyncedAt: now,
-        createdAt: FieldValue.serverTimestamp(),
+        // Initialize these if new, but don't overwrite if they exist
+        createdAt: now,
+        mirroredToGcal: false,
       },
       {
-        // merge: true preserves existing fields like `mirroredToGcal`
-        // while updating content fields
+        // We only update content fields + sync metadata.
+        // Importantly, we OMIT 'mirroredToGcal' and 'createdAt' from mergeFields
+        // so that for EXISTING docs, those values are preserved.
+        // For NEW docs, all fields in the payload above ARE written.
         mergeFields: [
+          "userId",
+          "icalUid",
           "title",
           "dueDate",
           "startTime",
@@ -142,6 +149,8 @@ async function syncUserCalendar(
           "allDay",
           "location",
           "description",
+          "source",
+          "readOnly",
           "lastSyncedAt",
         ],
       }
