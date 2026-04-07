@@ -58,10 +58,37 @@ export async function createGCalEvent(
 }
 
 /**
- * Build a GCal event payload from a family calendar event.
+ * Build a GCal event payload from a shared family calendar event.
+ * Prefixes the title with a family emoji and tags the source.
  */
 export function buildGCalPayload(
   title: string,
+  dueDate: string,
+  startTime?: string,
+  endTime?: string,
+  allDay?: boolean,
+  location?: string,
+  description?: string,
+): GCalEventPayload {
+  return buildPayload(`👨‍👩‍👧 ${title}`, 'taskflow-family', dueDate, startTime, endTime, allDay, location, description)
+}
+
+/**
+ * Build a GCal event payload from a user-created task.
+ * No emoji prefix; tagged as 'taskflow-user' so it can be identified later.
+ */
+export function buildUserTaskPayload(
+  title: string,
+  dueDate: string,
+): GCalEventPayload {
+  // User tasks have no time info — always created as all-day events
+  return buildPayload(`✅ ${title}`, 'taskflow-user', dueDate)
+}
+
+/** Shared payload builder for both family and user tasks. */
+function buildPayload(
+  summary: string,
+  source: string,
   dueDate: string,
   startTime?: string,
   endTime?: string,
@@ -93,11 +120,11 @@ export function buildGCalPayload(
   }
 
   const payload: GCalEventPayload = {
-    summary: `👨‍👩‍👧 ${title}`,
+    summary,
     start,
     end,
     extendedProperties: {
-      private: { source: 'taskflow-family' },
+      private: { source },
     },
   }
 

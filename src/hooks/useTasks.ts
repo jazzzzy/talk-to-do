@@ -6,6 +6,7 @@ import {
   toggleTaskStatus as repoToggle,
   deleteTask as repoDelete,
 } from '@/lib/taskRepository'
+import { createGCalEvent, buildUserTaskPayload } from '@/lib/googleCalendar'
 import type { Task } from '@/types/task'
 import type { DisplayTask } from '@/types/calendarEvent'
 
@@ -57,7 +58,7 @@ export interface UseTasksReturn {
  *   to merge into the task views. Pass from useCalendarEvents().displayTasks.
  */
 export function useTasks(familyDisplayTasks: DisplayTask[] = []): UseTasksReturn {
-  const { user } = useAuth()
+  const { user, googleAccessToken } = useAuth()
   const [rawTasks, setRawTasks]   = useState<Task[]>([])
   const [loading, setLoading]     = useState(true)
   const [error, setError]         = useState<Error | null>(null)
@@ -125,7 +126,19 @@ export function useTasks(familyDisplayTasks: DisplayTask[] = []): UseTasksReturn
   // pass userId explicitly.
   const addTask = async (title: string, dueDate: string) => {
     if (!user) throw new Error('Not authenticated')
+    // Save to Firestore first so the task appears immediately in the UI
     await repoAddTask(user.uid, title, dueDate)
+    // Mirror to Google Calendar in the background — don't block the UI
+    if (googleAccessToken) {
+      const payload = buildUserTaskPayload(title, dueDate)
+      createGCalEvent(googleAccessToken, payload).then((gcalId) => {
+        if (gcalId) {
+          console.log(`[useTasks] Task "${title}" mirrored to GCal: ${gcalId}`)
+        }
+      }).catch((err) => {
+        console.error('[useTasks] GCal mirror failed:', err)
+      })
+    }
   }
 
   const toggleTaskStatus = async (taskId: string, currentStatus: Task['status']) => {
