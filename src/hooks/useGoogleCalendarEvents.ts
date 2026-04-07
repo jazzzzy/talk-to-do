@@ -16,20 +16,23 @@ export interface UseGoogleCalendarEventsReturn {
   error: string | null
 }
 
-export function useGoogleCalendarEvents(): UseGoogleCalendarEventsReturn {
+export function useGoogleCalendarEvents(calendarIds: string[]): UseGoogleCalendarEventsReturn {
   const { googleAccessToken } = useAuth()
   const [gcalTasks, setGcalTasks] = useState<DisplayTask[]>([])
   const [loading, setLoading]     = useState(false)
   const [error, setError]         = useState<string | null>(null)
 
   useEffect(() => {
-    if (!googleAccessToken) return
+    if (!googleAccessToken || calendarIds.length === 0) {
+      setGcalTasks([])
+      return
+    }
 
     let cancelled = false
     setLoading(true)
     setError(null)
 
-    fetchGCalEvents(googleAccessToken)
+    fetchGCalEvents(googleAccessToken, calendarIds)
       .then((tasks) => {
         if (!cancelled) setGcalTasks(tasks)
       })
@@ -44,9 +47,9 @@ export function useGoogleCalendarEvents(): UseGoogleCalendarEventsReturn {
         if (!cancelled) setLoading(false)
       })
 
-    // Cancel stale fetch if token changes mid-flight
+    // Cancel stale fetch if token or calendar search changes
     return () => { cancelled = true }
-  }, [googleAccessToken])
+  }, [googleAccessToken, calendarIds])
 
   return { gcalTasks, loading, error }
 }

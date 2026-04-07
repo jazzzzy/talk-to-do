@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import {
   subscribeToUserSettings,
-  saveFamilyCalendarUrl,
+  saveUserSettings,
 } from '@/lib/settingsRepository'
 import type { UserSettings } from '@/types/calendarEvent'
 
@@ -14,7 +14,7 @@ export interface UseUserSettingsReturn {
   loading: boolean
   saving: boolean
   error: Error | null
-  saveCalendarUrl: (url: string) => Promise<void>
+  saveSettings: (data: Partial<Omit<UserSettings, 'userId' | 'updatedAt'>>) => Promise<void>
 }
 
 export function useUserSettings(): UseUserSettingsReturn {
@@ -49,12 +49,12 @@ export function useUserSettings(): UseUserSettingsReturn {
     return unsubscribe
   }, [user])
 
-  const saveCalendarUrl = useCallback(async (url: string) => {
+  const saveSettings = useCallback(async (data: Partial<Omit<UserSettings, 'userId' | 'updatedAt'>>) => {
     if (!user) throw new Error('Not authenticated')
     setSaving(true)
     setError(null)
     try {
-      await saveFamilyCalendarUrl(user.uid, url)
+      await saveUserSettings(user.uid, data)
     } catch (err) {
       setError(err as Error)
       throw err
@@ -63,5 +63,5 @@ export function useUserSettings(): UseUserSettingsReturn {
     }
   }, [user])
 
-  return { settings, loading, saving, error, saveCalendarUrl }
+  return { settings, loading, saving, error, saveSettings }
 }

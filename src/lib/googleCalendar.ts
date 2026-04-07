@@ -30,14 +30,42 @@ interface GCalListEvent {
 }
 
 /**
- * Fetch upcoming events from ALL of the user's Google Calendars.
- * - First fetches the calendar list, then events from each calendar in parallel.
- * - Window: start-of-today → today + GCAL_FETCH_DAYS days.
- * - Excludes events created by TaskFlow (tagged taskflow-user / taskflow-family)
- *   to prevent duplicates alongside existing task/family event lists.
- * - Returns a deduplicated DisplayTask[] with source 'google-calendar'.
+ * Fetch the list of all calendars belonging to the user.
+ * Used in the Settings UI for selection.
  */
-export async function fetchGCalEvents(accessToken: string): Promise<DisplayTask[]> {
+export async function fetchCalendarList(accessToken: string): Promise<GCalCalendar[]> {
+  try {
+    const res = await fetch(`${GCAL_API_BASE}/users/me/calendarList`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    })
+    if (!res.ok) {
+      if (res.status === 401) {
+        console.warn('[GCal] Access token expired during calendar list fetch.')
+        return []
+      }
+      console.error(`[GCal] Calendar list error ${res.status}`)
+      return []
+    }
+    const data = await res.json() as { items?: GCalCalendar[] }
+    return data.items ?? []
+  } catch (err) {
+    console.error('[GCal] Network error fetching calendar list:', err)
+    return []
+  }
+}
+
+/**
+ * Fetch upcoming events from a SELECTED set of Google Calendars.
+ * - Window: start-of-today → today + GCAL_FETCH_DAYS days.
+ * - Excludes events created by TaskFlow to prevent duplicates.
+ */
+export async function fetchGCalEvents(
+  accessToken: string,
+  calendarIds: string[],
+): Promise<DisplayTask[]> {
   const now = new Date()
 
   // Use start-of-today (midnight local time) so events earlier today aren't excluded
@@ -53,27 +81,7 @@ export async function fetchGCalEvents(accessToken: string): Promise<DisplayTask[
     'Content-Type': 'application/json',
   }
 
-  // ── Step 1: Get all calendars ──────────────────────────────
-  let calendars: GCalCalendar[] = []
-  try {
-    const calRes = await fetch(`${GCAL_API_BASE}/users/me/calendarList`, { headers })
-    if (!calRes.ok) {
-      if (calRes.status === 401) {
-        console.warn('[GCal] Access token expired during calendar list fetch.')
-        return []
-      }
-      console.error(`[GCal] Calendar list error ${calRes.status}`)
-      return []
-    }
-    const calData = await calRes.json() as { items?: GCalCalendar[] }
-    calendars = calData.items ?? []
-    console.log(`[GCal] Found ${calendars.length} calendar(s):`, calendars.map(c => c.summary))
-  } catch (err) {
-    console.error('[GCal] Network error fetching calendar list:', err)
-    return []
-  }
-
-  // ── Step 2: Fetch events from all calendars in parallel ────
+  // ── Step 1: Fetch events from all PROVIDED calendars in parallel ────
   const params = new URLSearchParams({
     timeMin,
     timeMax,
@@ -96,12 +104,12 @@ export async function fetchGCalEvents(accessToken: string): Promise<DisplayTask[
     }
   }
 
-  const allItemArrays = await Promise.all(calendars.map(cal => fetchCalendarEvents(cal.id)))
+  const allItemArrays = await Promise.all(calendarIds.map(fetchCalendarEvents))
   const allItems = allItemArrays.flat()
 
-  console.log(`[GCal] Raw API returned ${allItems.length} total item(s) across all calendars`)
+  console.log(`[GCal] Raw API returned ${allItems.length} total item(s) from ${calendarIds.length} calendars`)
 
-  // ── Step 3: Deduplicate and filter ────────────────────────
+  // ── Step 2: Deduplicate and filter ────────────────────────
   const seen = new Set<string>()
   const tasks: DisplayTask[] = []
 
@@ -113,7 +121,6 @@ export async function fetchGCalEvents(accessToken: string): Promise<DisplayTask[
     // Skip events we created from TaskFlow to avoid self-duplicates
     const source = item.extendedProperties?.private?.source
     if (source === 'taskflow-user' || source === 'taskflow-family') {
-      console.log(`[GCal] Skipping TaskFlow-created event: "${item.summary}"`)
       continue
     }
 

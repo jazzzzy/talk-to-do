@@ -42,16 +42,16 @@ export async function getUserSettings(userId: string): Promise<UserSettings | nu
   return { ...snap.data(), userId } as UserSettings
 }
 
-/** Save / update the family calendar URL. */
-export async function saveFamilyCalendarUrl(
+/** Save or update user settings (URL, GCal IDs, etc). */
+export async function saveUserSettings(
   userId: string,
-  url: string,
+  data: Partial<Omit<UserSettings, 'userId' | 'updatedAt'>>,
 ): Promise<void> {
   await setDoc(
     doc(db, COLLECTION, userId),
     {
+      ...data,
       userId,
-      familyCalendarUrl: url.trim(),
       updatedAt: Date.now(),
     },
     { merge: true },

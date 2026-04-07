@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useTasks } from '@/hooks/useTasks'
 import { useCalendarEvents } from '@/hooks/useCalendarEvents'
+import { useUserSettings } from '@/hooks/useUserSettings'
 import { useGoogleCalendarSync } from '@/hooks/useGoogleCalendarSync'
 import { useGoogleCalendarEvents } from '@/hooks/useGoogleCalendarEvents'
 import MainLayout from '@/layout/MainLayout'
@@ -26,8 +27,11 @@ export default function HomePage() {
   // Mirror new family events to Google Calendar (client-side)
   useGoogleCalendarSync(familyEvents)
 
+  const { settings } = useUserSettings()
+  const gcalIds = settings?.googleCalendarIds || ['primary']
+
   // Pull events FROM Google Calendar into the app (reverse sync)
-  const { gcalTasks } = useGoogleCalendarEvents()
+  const { gcalTasks } = useGoogleCalendarEvents(gcalIds)
 
   // Merge all external read-only events for the unified task list
   const externalTasks = [...familyDisplayTasks, ...gcalTasks]
