@@ -1,5 +1,5 @@
 import type { DisplayTask } from '@/types/calendarEvent'
-import FamilyBadge from '@/components/FamilyBadge'
+import EventBadge from '@/components/EventBadge'
 
 interface Props {
   task: DisplayTask
@@ -16,22 +16,33 @@ interface Props {
  */
 export default function TaskCard({ task, onToggle, onDelete, index = 0 }: Props) {
   const isCompleted = task.status === 'completed'
-  const isFamily = task.source === 'family-shared'
+  const isFamily    = task.source === 'family-shared'
+  const isGCal      = task.source === 'google-calendar'
+  const isReadOnly  = isFamily || isGCal
   const delay = `${index * 0.05}s`
 
   return (
     <div
       className={`glass-card animate-task-in rounded-2xl flex items-center gap-0 overflow-hidden ${
-        isFamily ? 'family-card' : ''
+        isFamily ? 'family-card' : isGCal ? 'gcal-card' : ''
       }`}
       style={{ animationDelay: delay }}
     >
       {/* ── Checkbox (44×64 touch target) ─────────────────────── */}
-      {isFamily ? (
-        // Family events: purple dot indicator instead of checkbox
+      {isReadOnly ? (
+        // Read-only events: coloured dot indicator instead of checkbox
         <div className="flex-shrink-0 w-14 h-16 flex items-center justify-center">
-          <div className="w-6 h-6 rounded-full bg-purple-500/20 border-2 border-purple-400/40 flex items-center justify-center">
-            <svg viewBox="0 0 16 16" className="w-3 h-3 text-purple-400" fill="currentColor" aria-hidden="true">
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+            isFamily
+              ? 'bg-purple-500/20 border-2 border-purple-400/40'
+              : 'bg-blue-500/20 border-2 border-blue-400/40'
+          }`}>
+            <svg
+              viewBox="0 0 16 16"
+              className={`w-3 h-3 ${isFamily ? 'text-purple-400' : 'text-blue-400'}`}
+              fill="currentColor"
+              aria-hidden="true"
+            >
               <path d="M8 1a3 3 0 100 6 3 3 0 000-6zM4.5 9A2.5 2.5 0 002 11.5V13a1 1 0 001 1h10a1 1 0 001-1v-1.5A2.5 2.5 0 0011.5 9h-7z" />
             </svg>
           </div>
@@ -78,10 +89,11 @@ export default function TaskCard({ task, onToggle, onDelete, index = 0 }: Props)
           {task.title}
         </p>
 
-        {/* Family badge row */}
-        {isFamily ? (
+        {/* Source badge row for read-only events */}
+        {isReadOnly ? (
           <div className="mt-1">
-            <FamilyBadge
+            <EventBadge
+              source={task.source}
               time={task.startTime && !task.allDay ? `${task.startTime}${task.endTime ? `–${task.endTime}` : ''}` : undefined}
               location={task.location}
             />
@@ -94,7 +106,7 @@ export default function TaskCard({ task, onToggle, onDelete, index = 0 }: Props)
       </div>
 
       {/* ── Delete / Read-only indicator ──────────────────────── */}
-      {isFamily ? (
+      {isReadOnly ? (
         // Read-only lock icon
         <div className="flex-shrink-0 w-12 h-16 flex items-center justify-center text-white/10">
           <svg

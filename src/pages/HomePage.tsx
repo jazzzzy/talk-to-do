@@ -3,6 +3,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useTasks } from '@/hooks/useTasks'
 import { useCalendarEvents } from '@/hooks/useCalendarEvents'
 import { useGoogleCalendarSync } from '@/hooks/useGoogleCalendarSync'
+import { useGoogleCalendarEvents } from '@/hooks/useGoogleCalendarEvents'
 import MainLayout from '@/layout/MainLayout'
 import TaskCard from '@/components/TaskCard'
 import AddTaskModal from '@/components/AddTaskModal'
@@ -19,13 +20,19 @@ import type { DisplayTask } from '@/types/calendarEvent'
 export default function HomePage() {
   const { user, signOut } = useAuth()
 
-  // Family calendar events
+  // Family calendar events (iCloud)
   const { events: familyEvents, displayTasks: familyDisplayTasks } = useCalendarEvents()
 
   // Mirror new family events to Google Calendar (client-side)
   useGoogleCalendarSync(familyEvents)
 
-  // Pass family display tasks into useTasks for merged views
+  // Pull events FROM Google Calendar into the app (reverse sync)
+  const { gcalTasks } = useGoogleCalendarEvents()
+
+  // Merge all external read-only events for the unified task list
+  const externalTasks = [...familyDisplayTasks, ...gcalTasks]
+
+  // Pass merged external tasks into useTasks
   const {
     todayTasks,
     upcomingTasks,
@@ -35,7 +42,7 @@ export default function HomePage() {
     addTask,
     toggleTaskStatus,
     deleteTask,
-  } = useTasks(familyDisplayTasks)
+  } = useTasks(externalTasks)
 
   const [activeView, setActiveView]     = useState<ActiveView>('tasks')
   const [modalOpen, setModalOpen]       = useState(false)

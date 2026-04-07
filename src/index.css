@@ -201,3 +201,32 @@ html, body, #root {
   animation: familyShimmer 1.5s ease infinite;
 }
 
+/* ─── Google Calendar badge ──────────────────────────────────── */
+
+/* Blue Google Calendar badge pill */
+.gcal-badge {
+  background: rgba(59, 130, 246, 0.15);
+  color: rgba(147, 197, 253, 0.9);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+/* Subtle left-accent for Google Calendar event cards */
+.gcal-card {
+  border-left: 2px solid rgba(59, 130, 246, 0.5) !important;
+}
+
+@keyframes gcalShimmer {
+  0%   { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.gcal-badge:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(59, 130, 246, 0.15) 0%,
+    rgba(59, 130, 246, 0.3) 50%,
+    rgba(59, 130, 246, 0.15) 100%
+  );
+  background-size: 200% 100%;
+  animation: gcalShimmer 1.5s ease infinite;
+}

@@ -19,7 +19,7 @@ export interface ParsedEvent {
 
 /**
  * Fetches the ICS file from the given URL and parses all VEVENT entries.
- * Filters out past events older than 30 days to keep the collection lean.
+ * Filters out past events older than 180 days to keep the collection lean.
  */
 export async function fetchAndParseIcs(icsUrl: string): Promise<ParsedEvent[]> {
   const response = await axios.get<string>(icsUrl, {
@@ -30,9 +30,9 @@ export async function fetchAndParseIcs(icsUrl: string): Promise<ParsedEvent[]> {
   const parsed = ical.sync.parseICS(response.data);
   const events: ParsedEvent[] = [];
 
-  // 30 days ago cutoff — don't sync ancient events
+  // 180 days ago cutoff — retain events from the past 6 months
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 30);
+  cutoff.setDate(cutoff.getDate() - 180);
 
   for (const key of Object.keys(parsed)) {
     const component = parsed[key];
@@ -43,7 +43,7 @@ export async function fetchAndParseIcs(icsUrl: string): Promise<ParsedEvent[]> {
 
     const startDate = vevent.start;
 
-    // Skip events older than 30 days
+    // Skip events older than 180 days
     if (startDate < cutoff) continue;
 
     const allDay = isAllDayEvent(vevent);

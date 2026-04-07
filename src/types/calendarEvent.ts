@@ -35,7 +35,7 @@ export interface UserSettings {
  * Either a user-created task or a synced family calendar event,
  * rendered in the same list with a visual discriminator.
  */
-export type TaskSource = 'user' | 'family-shared'
+export type TaskSource = 'user' | 'family-shared' | 'google-calendar'
 
 export interface DisplayTask {
   id: string
