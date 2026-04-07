@@ -18,7 +18,7 @@ import type { DisplayTask } from '@/types/calendarEvent'
  * Family calendar events appear inline with a purple badge.
  */
 export default function HomePage() {
-  const { user, signOut } = useAuth()
+  const { user, signOut, needsGCalReconnect, reconnectGCal } = useAuth()
 
   // Family calendar events (iCloud)
   const { events: familyEvents, displayTasks: familyDisplayTasks } = useCalendarEvents()
@@ -156,6 +156,22 @@ export default function HomePage() {
         onSignOut={signOut}
         onSettingsClick={() => setSettingsOpen(true)}
       >
+        {/* GCal reconnect banner — shown when token expired after page reload */}
+        {needsGCalReconnect && (
+          <div className="glass-card rounded-2xl px-4 py-3 mt-2 flex items-center justify-between gap-3 border border-blue-500/20">
+            <div className="flex items-center gap-2 text-sm text-blue-300/80">
+              <span>📅</span>
+              <span>Reconnect to load your Google Calendar events</span>
+            </div>
+            <button
+              onClick={reconnectGCal}
+              className="flex-shrink-0 text-xs font-semibold text-blue-400 hover:text-blue-300 border border-blue-500/30 hover:border-blue-400/50 rounded-lg px-3 py-1.5 transition-all duration-200"
+            >
+              Reconnect
+            </button>
+          </div>
+        )}
+
         {/* Loading skeletons */}
         {loading && (
           <div className="flex flex-col gap-3 pt-2">
