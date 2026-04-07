@@ -128,8 +128,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    // Request Google Calendar scope so we can read & write events
+    // Request Google Calendar scopes so we can read & write events
     googleProvider.addScope('https://www.googleapis.com/auth/calendar.events')
+    googleProvider.addScope('https://www.googleapis.com/auth/calendar.readonly')
 
     const result = await signInWithPopup(auth, googleProvider)
 
@@ -150,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const reconnectGCal = async () => {
     googleProvider.addScope('https://www.googleapis.com/auth/calendar.events')
+    googleProvider.addScope('https://www.googleapis.com/auth/calendar.readonly')
     const result = await signInWithPopup(auth, googleProvider)
     const credential = GoogleAuthProviderClass.credentialFromResult(result)
     if (credential?.accessToken) {

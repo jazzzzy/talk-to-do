@@ -72,8 +72,8 @@ export const triggerCalendarSync = onCall(
       );
     }
 
-    await syncUserCalendar(userId, settingsDoc.data()!);
-    return { success: true, message: "Calendar synced successfully." };
+    const result = await syncUserCalendar(userId, settingsDoc.data()!);
+    return { success: true, count: result.count, message: `Synced ${result.count} events.` };
   }
 );
 
@@ -82,12 +82,12 @@ export const triggerCalendarSync = onCall(
 async function syncUserCalendar(
   userId: string,
   settings: FirebaseFirestore.DocumentData
-): Promise<void> {
+): Promise<{ count: number }> {
   const calendarUrl = settings.familyCalendarUrl as string | undefined;
 
   if (!calendarUrl) {
     console.log(`[sync] User ${userId}: No calendar URL, skipping.`);
-    return;
+    return { count: 0 };
   }
 
   console.log(`[sync] User ${userId}: Fetching ICS from ${calendarUrl}…`);
@@ -153,6 +153,8 @@ async function syncUserCalendar(
 
   // Remove stale events that are no longer in the ICS feed
   await removeStaleEvents(userId, incomingUids);
+
+  return { count: events.length };
 }
 
 /**

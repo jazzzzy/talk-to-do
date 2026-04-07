@@ -17,6 +17,7 @@ export default function SettingsModal({ open, onClose }: Props) {
   const [error, setError]           = useState<string | null>(null)
   const [success, setSuccess]       = useState(false)
   const [syncing, setSyncing]       = useState(false)
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
   const [tooltipOpen, setTooltipOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -26,6 +27,7 @@ export default function SettingsModal({ open, onClose }: Props) {
       setUrl(settings?.familyCalendarUrl ?? '')
       setError(null)
       setSuccess(false)
+      setSyncMessage(null)
       setTimeout(() => inputRef.current?.focus(), 80)
     }
   }, [open, settings])
@@ -53,6 +55,7 @@ export default function SettingsModal({ open, onClose }: Props) {
 
     setError(null)
     setSuccess(false)
+    setSyncMessage(null)
 
     try {
       // Normalize webcal:// to https://
@@ -68,11 +71,12 @@ export default function SettingsModal({ open, onClose }: Props) {
   const handleManualSync = async () => {
     setSyncing(true)
     setError(null)
+    setSyncMessage(null)
     try {
       const functions = getFunctions()
       const trigger = httpsCallable(functions, 'triggerCalendarSync')
-      await trigger()
-      setSuccess(true)
+      const result = await trigger() as { data: { count: number } }
+      setSyncMessage(`✓ Synced ${result.data.count} events`)
     } catch (err) {
       console.error('[Settings] Manual sync failed:', err)
       setError('Sync failed. Make sure the URL is valid and accessible.')
@@ -166,6 +170,7 @@ export default function SettingsModal({ open, onClose }: Props) {
                 onChange={(e) => {
                   setUrl(e.target.value)
                   setSuccess(false)
+                  setSyncMessage(null)
                 }}
                 placeholder="https://p123-caldav.icloud.com/published/..."
                 className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white text-sm placeholder-white/20 focus:outline-none focus:border-purple-400/50 focus:bg-white/10 transition-all shadow-inner"
@@ -182,6 +187,13 @@ export default function SettingsModal({ open, onClose }: Props) {
               {success && (
                 <div className="text-emerald-400 text-xs bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 animate-task-in">
                   ✓ Saved successfully!
+                </div>
+              )}
+
+              {/* Sync Message */}
+              {syncMessage && (
+                <div className="text-emerald-400 text-xs bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 animate-task-in">
+                  {syncMessage}
                 </div>
               )}
 
