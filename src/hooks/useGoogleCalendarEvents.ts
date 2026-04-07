@@ -22,8 +22,14 @@ export function useGoogleCalendarEvents(calendarIds: string[]): UseGoogleCalenda
   const [loading, setLoading]     = useState(false)
   const [error, setError]         = useState<string | null>(null)
 
+  // Convert the array to a stable comma-separated string to absolutely mathematically
+  // guarantee that React does not misinterpret array reference changes as dependency changes.
+  const idsStr = calendarIds.slice().sort().join(',')
+
   useEffect(() => {
-    if (!googleAccessToken || calendarIds.length === 0) {
+    const ids = idsStr ? idsStr.split(',') : []
+
+    if (!googleAccessToken || ids.length === 0) {
       setGcalTasks([])
       return
     }
@@ -32,7 +38,7 @@ export function useGoogleCalendarEvents(calendarIds: string[]): UseGoogleCalenda
     setLoading(true)
     setError(null)
 
-    fetchGCalEvents(googleAccessToken, calendarIds)
+    fetchGCalEvents(googleAccessToken, ids)
       .then((tasks) => {
         if (!cancelled) setGcalTasks(tasks)
       })
@@ -49,7 +55,7 @@ export function useGoogleCalendarEvents(calendarIds: string[]): UseGoogleCalenda
 
     // Cancel stale fetch if token or calendar search changes
     return () => { cancelled = true }
-  }, [googleAccessToken, calendarIds])
+  }, [googleAccessToken, idsStr])
 
   return { gcalTasks, loading, error }
 }

@@ -11,6 +11,15 @@ const GCAL_API_BASE = 'https://www.googleapis.com/calendar/v3'
 /** Number of days ahead to fetch from Google Calendar. */
 const GCAL_FETCH_DAYS = 90
 
+/* ─── In-Memory Cache (Rate Limit Protection) ───────────────────── */
+
+interface CacheEntry {
+  tasks: DisplayTask[]
+  timestamp: number
+}
+const eventsCache = new Map<string, CacheEntry>()
+const CACHE_TTL_MS = 60 * 1000 // 60 seconds
+
 /* ─── GCal Event fetch (Reverse Sync) ───────────────────────── */
 
 interface GCalCalendar {
@@ -66,11 +75,19 @@ export async function fetchGCalEvents(
   accessToken: string,
   calendarIds: string[],
 ): Promise<DisplayTask[]> {
+  // Sort IDs so 'primary,Család' and 'Család,primary' use the same cache key
+  const cacheKey = calendarIds.slice().sort().join(',')
+  const cached = eventsCache.get(cacheKey)
+
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    console.log(`[GCal] Returning cached events for [${cacheKey}]`)
+    return cached.tasks
+  }
+
   const now = new Date()
 
-  // Use start-of-today (midnight local time) so events earlier today aren't excluded
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)
-  const timeMin = startOfToday.toISOString()
+  // Use the exact current moment so we do NOT fetch past events
+  const timeMin = now.toISOString()
 
   const future = new Date(now)
   future.setDate(future.getDate() + GCAL_FETCH_DAYS)
@@ -147,6 +164,10 @@ export async function fetchGCalEvents(
   }
 
   console.log(`[GCal] Fetched ${tasks.length} external events (${GCAL_FETCH_DAYS}-day window)`)
+  
+  // Save to Cache
+  eventsCache.set(cacheKey, { tasks, timestamp: Date.now() })
+  
   return tasks
 }
 
