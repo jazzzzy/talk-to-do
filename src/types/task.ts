@@ -8,6 +8,8 @@ export interface Task {
   userId: string
   title: string
   dueDate: string           // ISO local date: 'YYYY-MM-DD'
+  startTime?: string        // 'HH:MM'
+  endTime?: string          // 'HH:MM'
   status: 'pending' | 'completed'
   createdAt: number         // Unix timestamp (ms) – Date.now()
 }

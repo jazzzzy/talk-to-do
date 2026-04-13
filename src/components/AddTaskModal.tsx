@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 interface Props {
   open: boolean
   onClose: () => void
-  onAdd: (title: string, dueDate: string) => Promise<void>
+  onAdd: (title: string, dueDate: string, startTime?: string, endTime?: string) => Promise<void>
 }
 
 function getLocalToday(): string {
@@ -17,6 +17,8 @@ function getLocalToday(): string {
 export default function AddTaskModal({ open, onClose, onAdd }: Props) {
   const [title, setTitle]       = useState('')
   const [dueDate, setDueDate]   = useState(getLocalToday())
+  const [startTime, setStartTime] = useState('')
+  const [endTime, setEndTime]     = useState('')
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -27,6 +29,8 @@ export default function AddTaskModal({ open, onClose, onAdd }: Props) {
       setTimeout(() => inputRef.current?.focus(), 80)
       setTitle('')
       setDueDate(getLocalToday())
+      setStartTime('')
+      setEndTime('')
       setError(null)
     }
   }, [open])
@@ -46,7 +50,7 @@ export default function AddTaskModal({ open, onClose, onAdd }: Props) {
     setLoading(true)
     setError(null)
     try {
-      await onAdd(title.trim(), dueDate)
+      await onAdd(title.trim(), dueDate, startTime || undefined, endTime || undefined)
       onClose()
     } catch {
       setError('Could not save task. Please try again.')
@@ -120,23 +124,67 @@ export default function AddTaskModal({ open, onClose, onAdd }: Props) {
                 />
               </div>
 
-              {/* Due date input */}
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor="modal-task-date"
-                  className="text-white/40 text-[10px] font-bold uppercase tracking-widest pl-1"
-                >
-                  Due Date
-                </label>
-                <input
-                  id="modal-task-date"
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  required
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white text-sm focus:outline-none focus:border-indigo-400/50 transition-all shadow-inner"
-                  style={{ colorScheme: 'dark' }}
-                />
+              {/* Due date and Times */}
+              <div className="flex flex-col gap-4">
+                {/* Date */}
+                <div className="flex flex-col gap-2">
+                  <label
+                    htmlFor="modal-task-date"
+                    className="text-white/40 text-[10px] font-bold uppercase tracking-widest pl-1"
+                  >
+                    Due Date
+                  </label>
+                  <input
+                    id="modal-task-date"
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    required
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white text-sm focus:outline-none focus:border-indigo-400/50 transition-all shadow-inner"
+                    style={{ colorScheme: 'dark' }}
+                  />
+                </div>
+
+                {/* Times (Side-by-side) */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label
+                      htmlFor="modal-task-start-time"
+                      className="text-white/40 text-[10px] font-bold uppercase tracking-widest pl-1"
+                    >
+                      Start Time (Opt)
+                    </label>
+                    <input
+                      id="modal-task-start-time"
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => {
+                        setStartTime(e.target.value)
+                        if (!e.target.value) setEndTime('')
+                      }}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white text-sm focus:outline-none focus:border-indigo-400/50 transition-all shadow-inner"
+                      style={{ colorScheme: 'dark' }}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label
+                      htmlFor="modal-task-end-time"
+                      className="text-white/40 text-[10px] font-bold uppercase tracking-widest pl-1"
+                    >
+                      End Time (Opt)
+                    </label>
+                    <input
+                      id="modal-task-end-time"
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      disabled={!startTime}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white text-sm focus:outline-none focus:border-indigo-400/50 disabled:opacity-30 disabled:grayscale transition-all shadow-inner"
+                      style={{ colorScheme: 'dark' }}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Error state */}

@@ -58,11 +58,15 @@ export async function addTask(
   userId: string,
   title: string,
   dueDate: string,
+  startTime?: string,
+  endTime?: string,
 ): Promise<void> {
   const payload: NewTaskPayload = {
     userId,
     title: title.trim(),
     dueDate,
+    startTime: startTime || undefined,
+    endTime: endTime || undefined,
     status: 'pending',
     createdAt: Date.now(),
   }

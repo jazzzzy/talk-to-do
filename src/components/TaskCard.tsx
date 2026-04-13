@@ -93,8 +93,8 @@ export default function TaskCard({ task, onToggle, onDelete, index = 0 }: Props)
           {formatDueDate(task.dueDate)}
         </p>
 
-        {/* Source badge row for read-only events */}
-        {isReadOnly && (
+        {/* Badge row: Source, Time, Location */}
+        {(isReadOnly || task.startTime || task.location) && (
           <div className="mt-1">
             <EventBadge
               source={task.source}

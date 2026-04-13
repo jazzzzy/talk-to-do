@@ -245,9 +245,13 @@ export function buildGCalPayload(
 export function buildUserTaskPayload(
   title: string,
   dueDate: string,
+  startTime?: string,
+  endTime?: string,
 ): GCalEventPayload {
-  // User tasks have no time info — always created as all-day events
-  return buildPayload(`✅ ${title}`, 'taskflow-user', dueDate)
+  // If no time is provided, create an all-day event.
+  // Otherwise, it’s a timed event.
+  const allDay = !startTime
+  return buildPayload(`✅ ${title}`, 'taskflow-user', dueDate, startTime, endTime, allDay)
 }
 
 /** Shared payload builder for both family and user tasks. */

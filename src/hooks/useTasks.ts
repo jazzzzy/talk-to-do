@@ -32,6 +32,9 @@ function taskToDisplayTask(task: Task): DisplayTask {
     createdAt: task.createdAt,
     source: 'user',
     readOnly: false,
+    startTime: task.startTime,
+    endTime: task.endTime,
+    allDay: !task.startTime,
   }
 }
 
@@ -46,7 +49,7 @@ export interface UseTasksReturn {
   loading: boolean
   error: Error | null
   // CRUD operations bound to the current user (only for user-created tasks)
-  addTask: (title: string, dueDate: string) => Promise<void>
+  addTask: (title: string, dueDate: string, startTime?: string, endTime?: string) => Promise<void>
   toggleTaskStatus: (taskId: string, currentStatus: Task['status']) => Promise<void>
   deleteTask: (taskId: string) => Promise<void>
 }
@@ -124,13 +127,13 @@ export function useTasks(familyDisplayTasks: DisplayTask[] = []): UseTasksReturn
 
   // Bind repository calls to the current user so callers don't need to
   // pass userId explicitly.
-  const addTask = async (title: string, dueDate: string) => {
+  const addTask = async (title: string, dueDate: string, startTime?: string, endTime?: string) => {
     if (!user) throw new Error('Not authenticated')
     // Save to Firestore first so the task appears immediately in the UI
-    await repoAddTask(user.uid, title, dueDate)
+    await repoAddTask(user.uid, title, dueDate, startTime, endTime)
     // Mirror to Google Calendar in the background — don't block the UI
     if (googleAccessToken) {
-      const payload = buildUserTaskPayload(title, dueDate)
+      const payload = buildUserTaskPayload(title, dueDate, startTime, endTime)
       createGCalEvent(googleAccessToken, payload).then((gcalId) => {
         if (gcalId) {
           console.log(`[useTasks] Task "${title}" mirrored to GCal: ${gcalId}`)

@@ -73,8 +73,8 @@ export default function HomePage() {
     catch (e) { console.error('[HomePage] delete error', e) }
   }
 
-  const handleAdd = async (title: string, dueDate: string) => {
-    await addTask(title, dueDate)
+  const handleAdd = async (title: string, dueDate: string, startTime?: string, endTime?: string) => {
+    await addTask(title, dueDate, startTime, endTime)
   }
 
   /* ── Combined Tasks Render ──────────────────────────────── */
