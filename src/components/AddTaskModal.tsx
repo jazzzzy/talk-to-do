@@ -145,9 +145,9 @@ export default function AddTaskModal({ open, onClose, onAdd }: Props) {
                   />
                 </div>
 
-                {/* Times (Side-by-side) */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex flex-col gap-2 min-w-0 overflow-hidden">
+                {/* Times (Vertically Stacked) */}
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-2">
                     <label
                       htmlFor="modal-task-start-time"
                       className="text-white/40 text-[10px] font-bold uppercase tracking-widest pl-1"
@@ -167,7 +167,7 @@ export default function AddTaskModal({ open, onClose, onAdd }: Props) {
                     />
                   </div>
 
-                  <div className="flex flex-col gap-2 min-w-0 overflow-hidden">
+                  <div className="flex flex-col gap-2">
                     <label
                       htmlFor="modal-task-end-time"
                       className="text-white/40 text-[10px] font-bold uppercase tracking-widest pl-1"

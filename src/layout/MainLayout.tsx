@@ -55,7 +55,7 @@ export default function MainLayout({
       style={{ height: '100dvh', overflow: 'hidden' }}
     >
       {/* ── Ambient orbs ── */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
         <div className="gradient-orb w-80 h-80 bg-indigo-600/25 -top-16 -right-16" style={{ position: 'absolute' }} />
         <div className="gradient-orb w-64 h-64 bg-purple-600/15 top-1/2 -left-20" style={{ position: 'absolute', animationDelay: '4s' }} />
         <div className="gradient-orb w-48 h-48 bg-blue-600/10 bottom-32 right-10" style={{ position: 'absolute', animationDelay: '7s' }} />
