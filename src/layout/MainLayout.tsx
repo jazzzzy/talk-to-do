@@ -51,7 +51,7 @@ export default function MainLayout({
 
   return (
     <div
-      className="gradient-bg flex flex-col w-full"
+      className="relative gradient-bg flex flex-col w-full"
       style={{ height: '100dvh', overflow: 'hidden' }}
     >
       {/* ── Ambient orbs ── */}
