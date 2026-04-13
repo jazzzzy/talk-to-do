@@ -60,7 +60,8 @@ interface ParsedTaskResponse {
 - [ ] The LLM successfully uses a Tool Call to query Google Calendar API, verifying if the requested time block has conflicts.
 - [ ] The Add Task Modal opens with the fields populated and a visible warning if the slot is double-booked.
 
-## Open Questions & Missing Context
-1. **AI Provider Selection**: Do we use OpenAI (Whisper + GPT) or Google Cloud (Speech-to-Text + Gemini)?
-2. **MCP vs Tool Calling**: Regarding "Google Calendar MCP", should we build an isolated MCP container (which usually requires a separate host), or use the standard "LLM Tool Calling" pattern within a Firebase Cloud Function, providing it the user's Google OAuth token?
-3. **Conflict Resolution Strategy**: Should the UX just *warn* the user about the conflict (allowing them to overwrite it), or should the LLM forcefully shift the parsed time to the next available slot?
+
+## Finalized Decisions
+1. **AI Provider**: Google Cloud (Speech-to-Text via Google Cloud SDK / Vertex AI) and Gemini for LLM parsing.
+2. **Architecture**: Direct Tool Calling inside the Firebase Cloud Function using existing Google OAuth tokens.
+3. **Conflict Resolution**: The LLM will provide a funny, short warning message in the UI if a conflict is detected. It will not auto-shift the task.
