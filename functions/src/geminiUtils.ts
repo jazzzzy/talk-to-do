@@ -1,12 +1,6 @@
 import { GoogleGenAI, Type } from '@google/genai'
 import axios from 'axios'
 
-// Requires the GEMINI_API_KEY to be set in the Firebase environment variables
-if (!process.env.GEMINI_API_KEY) {
-  console.error('[GeminiUtils] CRITICAL: GEMINI_API_KEY is not set in environment variables.')
-}
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'MISSING_KEY' })
-
 export interface ParsedVoiceTask {
   title: string
   dueDate: string
@@ -95,9 +89,11 @@ const taskResponseSchema = {
 export async function parseTaskWithGemini(
   transcript: string,
   userTimezone: string,
-  accessToken: string | undefined
+  accessToken: string | undefined,
+  apiKey: string
 ): Promise<ParsedVoiceTask> {
   
+  const ai = new GoogleGenAI({ apiKey })
   const today = new Date().toLocaleString('en-US', { timeZone: userTimezone })
 
   const systemInstruction = `

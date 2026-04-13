@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
+import { defineSecret } from 'firebase-functions/params'
 import * as admin from 'firebase-admin'
 import speech from '@google-cloud/speech'
 import { parseTaskWithGemini } from './geminiUtils'
@@ -7,8 +8,10 @@ if (!admin.apps.length) {
   admin.initializeApp()
 }
 
-// Ensure the Speech client connects with the default credentials on Google Cloud environments
 const client = new speech.v1.SpeechClient()
+
+// Define the GEMINI_API_KEY secret as a Gen 2 parameter
+const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY')
 
 /**
  * Handles incoming audio blobs from the PWA, transcribes them using GCP STT,
@@ -16,7 +19,7 @@ const client = new speech.v1.SpeechClient()
  */
 export const processVoiceCommand = onCall({ 
   timeoutSeconds: 60,
-  secrets: ['GEMINI_API_KEY']
+  secrets: [GEMINI_API_KEY]
 }, async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'User must be authenticated to process voice commands.')
@@ -58,7 +61,8 @@ export const processVoiceCommand = onCall({
 
   try {
     // Phase 2: Orchestrate LLM parsing and Google Calendar check
-    const parsedTask = await parseTaskWithGemini(transcript, timezone, accessToken)
+    // Pass the actual key value from the secret parameter
+    const parsedTask = await parseTaskWithGemini(transcript, timezone, accessToken, GEMINI_API_KEY.value())
     return parsedTask
   } catch (error: any) {
     console.error('Error processing voice command LLM:', error)
