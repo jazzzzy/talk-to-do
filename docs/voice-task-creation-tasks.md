@@ -6,7 +6,7 @@
   - **Files**: `functions/package.json`, `functions/src/index.ts`, `functions/src/processVoiceCommand.ts`
 
 - `[ ]` **Task: Implement STT conversion inside Cloud Function**
-  - **Acceptance**: Function correctly accepts base64 audio and passes it to the Google Cloud Speech client, returning a raw text transcript.
+  - **Acceptance**: Function correctly accepts base64 audio and passes it to the Google Cloud Speech-to-Text V1 API (using `v1.SpeechClient()`), returning a raw text transcript.
   - **Verify**: Write a simple unit test or invoke via emulator shell to verify basic transcription logic.
   - **Files**: `functions/src/processVoiceCommand.ts`
 
