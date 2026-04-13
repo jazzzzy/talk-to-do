@@ -20,17 +20,17 @@
   - **Verify**: Test within Firebase emulator using simulated STT text resolving to a mock calendar busy slot.
   - **Files**: `functions/src/processVoiceCommand.ts`
 
-- `[ ]` **Task: Implement `<useVoiceRecorder>` Hook**
+- `[x]` **Task: Implement `<useVoiceRecorder>` Hook**
   - **Acceptance**: A robust custom hook uses `MediaRecorder` API to capture mic stream, handles permissions, outputs a base64 blob, and triggers the `processVoiceCommand` Firebase function.
   - **Verify**: Hook correctly logs base64 payload to console during local dev.
   - **Files**: `src/hooks/useVoiceRecorder.ts`
 
-- `[ ]` **Task: Implement `VoiceRecorderFab` UI Component**
+- `[x]` **Task: Implement `VoiceRecorderFab` UI Component**
   - **Acceptance**: A microphone Floating Action Button is created with distinct active ("Listening") and loading ("Processing") glassmorphic states. Added to the main App shell.
   - **Verify**: Visual check. Button displays correctly and triggers the hook without page disruption.
   - **Files**: `src/components/VoiceRecorderFab.tsx`, `src/layout/MainLayout.tsx`
 
-- `[ ]` **Task: Link Voice Payload to AddTaskModal**
+- `[x]` **Task: Link Voice Payload to AddTaskModal**
   - **Acceptance**: When the hook receives the parsed JSON from Firebase, `AddTaskModal` opens automatically with all values heavily pre-filled, and displaying the funny `conflictWarning` prominently if it exists.
   - **Verify**: Manual end-to-end check in the browser. Voice triggers modal opening with data intact. 
   - **Files**: `src/pages/HomePage.tsx`, `src/components/AddTaskModal.tsx`

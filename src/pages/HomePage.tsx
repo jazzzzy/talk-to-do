@@ -10,6 +10,8 @@ import TaskCard from '@/components/TaskCard'
 import AddTaskModal from '@/components/AddTaskModal'
 import SettingsModal from '@/components/SettingsModal'
 import EmptyState from '@/components/EmptyState'
+import VoiceRecorderFab from '@/components/VoiceRecorderFab'
+import type { ParsedVoiceTask } from '@/hooks/useVoiceRecorder'
 import type { ActiveView } from '@/components/BottomNav'
 import type { DisplayTask } from '@/types/calendarEvent'
 
@@ -57,8 +59,18 @@ export default function HomePage() {
   const [activeView, setActiveView]     = useState<ActiveView>('tasks')
   const [modalOpen, setModalOpen]       = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [voiceTaskInit, setVoiceTaskInit] = useState<ParsedVoiceTask | null>(null)
 
   /* ── Handlers ───────────────────────────────────────────── */
+  const handleVoiceResult = (task: ParsedVoiceTask) => {
+    setVoiceTaskInit(task)
+    setModalOpen(true)
+  }
+
+  const handleModalClose = () => {
+    setModalOpen(false)
+    setTimeout(() => setVoiceTaskInit(null), 300)
+  }
   const handleToggle = async (task: DisplayTask) => {
     // Family events are read-only — no toggle
     if (task.readOnly) return
@@ -208,9 +220,12 @@ export default function HomePage() {
         )}
       </MainLayout>
 
+      <VoiceRecorderFab onResult={handleVoiceResult} />
+
       <AddTaskModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={handleModalClose}
+        initialData={voiceTaskInit}
         onAdd={handleAdd}
       />
 

@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 
+import type { ParsedVoiceTask } from '@/hooks/useVoiceRecorder'
+
 interface Props {
   open: boolean
   onClose: () => void
   onAdd: (title: string, dueDate: string, startTime?: string, endTime?: string) => Promise<void>
+  initialData?: ParsedVoiceTask | null
 }
 
 function getLocalToday(): string {
@@ -14,7 +17,7 @@ function getLocalToday(): string {
  * AddTaskModal — a bottom-sheet that slides up from the viewport bottom.
  * Dismissible via backdrop click, Escape key, or the Cancel button.
  */
-export default function AddTaskModal({ open, onClose, onAdd }: Props) {
+export default function AddTaskModal({ open, onClose, onAdd, initialData }: Props) {
   const [title, setTitle]       = useState('')
   const [dueDate, setDueDate]   = useState(getLocalToday())
   const [startTime, setStartTime] = useState('')
@@ -27,13 +30,14 @@ export default function AddTaskModal({ open, onClose, onAdd }: Props) {
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 80)
-      setTitle('')
-      setDueDate(getLocalToday())
-      setStartTime('')
-      setEndTime('')
+      setTitle(initialData?.title || '')
+      setDueDate(initialData?.dueDate || getLocalToday())
+      // Only set times if they are explicitly returned by the parser
+      setStartTime(initialData?.startTime || '')
+      setEndTime(initialData?.endTime || '')
       setError(null)
     }
-  }, [open])
+  }, [open, initialData])
 
   // Dismiss on Escape key.
   useEffect(() => {
@@ -100,6 +104,13 @@ export default function AddTaskModal({ open, onClose, onAdd }: Props) {
         <div className="flex-1 overflow-y-auto px-5 pt-2 pb-8">
           <div className="flex flex-col gap-5">
             <h2 className="text-white font-bold text-lg tracking-tight">New Task</h2>
+
+            {initialData?.hasConflict && initialData.conflictWarning && (
+              <div role="alert" className="text-amber-200 text-xs bg-amber-500/20 border border-amber-500/30 rounded-xl px-4 py-3 animate-task-in shadow-lg">
+                <span className="mr-2">⚠️</span>
+                {initialData.conflictWarning}
+              </div>
+            )}
 
             <form id="add-task-form" onSubmit={handleSubmit} className="flex flex-col gap-5">
 
