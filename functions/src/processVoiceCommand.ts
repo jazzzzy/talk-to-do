@@ -57,8 +57,8 @@ export const processVoiceCommand = onCall({ timeoutSeconds: 60 }, async (request
     // Phase 2: Orchestrate LLM parsing and Google Calendar check
     const parsedTask = await parseTaskWithGemini(transcript, timezone, accessToken)
     return parsedTask
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error processing voice command LLM:', error)
-    throw new HttpsError('internal', 'Failed to parse task from transcript.')
+    throw new HttpsError('internal', `Failed to parse task: ${error.message || 'Unknown error'}`)
   }
 })

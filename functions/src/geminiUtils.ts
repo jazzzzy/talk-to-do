@@ -2,7 +2,10 @@ import { GoogleGenAI, Type } from '@google/genai'
 import axios from 'axios'
 
 // Requires the GEMINI_API_KEY to be set in the Firebase environment variables
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+if (!process.env.GEMINI_API_KEY) {
+  console.error('[GeminiUtils] CRITICAL: GEMINI_API_KEY is not set in environment variables.')
+}
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'MISSING_KEY' })
 
 export interface ParsedVoiceTask {
   title: string
@@ -112,7 +115,7 @@ Rules:
 
   try {
     const chat = ai.chats.create({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       config: {
         systemInstruction,
         tools: accessToken ? [calendarTool] : [], // Only supply tool if we have an auth token
@@ -144,7 +147,7 @@ Rules:
     // structured output best as a distinct generation step).
     const history = await chat.getHistory()
     const finalJSONResponse = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       contents: [...history, { role: 'user', parts: [{ text: 'Output the final parsed task as JSON according to the schema.' }] }],
       config: {
         responseMimeType: 'application/json',
@@ -157,8 +160,14 @@ Rules:
     console.log('[GeminiUtils] Final parsed result:', data)
     return data
 
-  } catch (error) {
-    console.error('[GeminiUtils] Failed LLM orchestration:', error)
+  } catch (error: any) {
+    console.error('[GeminiUtils] Failed LLM orchestration. Error details:', {
+      message: error.message,
+      stack: error.stack,
+      status: error.status,
+      statusText: error.statusText,
+      data: error.response?.data
+    })
     throw error
   }
 }
