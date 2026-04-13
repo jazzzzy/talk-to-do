@@ -10,6 +10,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { fetchAndParseIcs, type ParsedEvent } from "./icsParser";
+export { processVoiceCommand } from "./processVoiceCommand";
 
 initializeApp();
 const db = getFirestore();
