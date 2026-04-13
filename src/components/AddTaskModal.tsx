@@ -146,8 +146,8 @@ export default function AddTaskModal({ open, onClose, onAdd }: Props) {
                 </div>
 
                 {/* Times (Side-by-side) */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col gap-2 min-w-0 overflow-hidden">
                     <label
                       htmlFor="modal-task-start-time"
                       className="text-white/40 text-[10px] font-bold uppercase tracking-widest pl-1"
@@ -162,12 +162,12 @@ export default function AddTaskModal({ open, onClose, onAdd }: Props) {
                         setStartTime(e.target.value)
                         if (!e.target.value) setEndTime('')
                       }}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white text-sm focus:outline-none focus:border-indigo-400/50 transition-all shadow-inner"
+                      className="w-full max-w-full bg-white/5 border border-white/10 rounded-2xl px-3 py-4 text-white text-sm focus:outline-none focus:border-indigo-400/50 transition-all shadow-inner"
                       style={{ colorScheme: 'dark' }}
                     />
                   </div>
 
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-2 min-w-0 overflow-hidden">
                     <label
                       htmlFor="modal-task-end-time"
                       className="text-white/40 text-[10px] font-bold uppercase tracking-widest pl-1"
@@ -180,7 +180,7 @@ export default function AddTaskModal({ open, onClose, onAdd }: Props) {
                       value={endTime}
                       onChange={(e) => setEndTime(e.target.value)}
                       disabled={!startTime}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white text-sm focus:outline-none focus:border-indigo-400/50 disabled:opacity-30 disabled:grayscale transition-all shadow-inner"
+                      className="w-full max-w-full bg-white/5 border border-white/10 rounded-2xl px-3 py-4 text-white text-sm focus:outline-none focus:border-indigo-400/50 disabled:opacity-30 disabled:grayscale transition-all shadow-inner"
                       style={{ colorScheme: 'dark' }}
                     />
                   </div>
