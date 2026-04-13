@@ -57,14 +57,17 @@ export function useVoiceRecorder(onResult: (task: ParsedVoiceTask) => void) {
 
       try {
         const base64data = await blobToBase64(audioBlob)
-        // Send to Firebase Cloud Function
         const processCmd = httpsCallable<any, ParsedVoiceTask>(functions, 'processVoiceCommand')
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+        if (!googleAccessToken) {
+          console.warn('[useVoiceRecorder] No Google Access Token found. Calendar conflict checking will be skipped.')
+        }
 
         const response = await processCmd({
           audioBase64: base64data,
           timezone,
-          accessToken: googleAccessToken
+          accessToken: googleAccessToken || undefined
         })
 
         if (response.data) {

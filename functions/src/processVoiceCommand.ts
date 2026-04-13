@@ -14,7 +14,10 @@ const client = new speech.v1.SpeechClient()
  * Handles incoming audio blobs from the PWA, transcribes them using GCP STT,
  * and parses task details + calendar conflicts using Gemini.
  */
-export const processVoiceCommand = onCall({ timeoutSeconds: 60 }, async (request) => {
+export const processVoiceCommand = onCall({ 
+  timeoutSeconds: 60,
+  secrets: ['GEMINI_API_KEY']
+}, async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'User must be authenticated to process voice commands.')
   }
