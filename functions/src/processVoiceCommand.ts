@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
 import * as admin from 'firebase-admin'
 import speech from '@google-cloud/speech'
+import { parseTaskWithGemini } from './geminiUtils'
 
 if (!admin.apps.length) {
   admin.initializeApp()
@@ -18,7 +19,7 @@ export const processVoiceCommand = onCall({ timeoutSeconds: 60 }, async (request
     throw new HttpsError('unauthenticated', 'User must be authenticated to process voice commands.')
   }
 
-  const { audioBase64, timezone } = request.data
+  const { audioBase64, timezone, accessToken } = request.data
 
   if (!audioBase64) {
     throw new HttpsError('invalid-argument', 'Missing audioBase64 payload.')
@@ -53,14 +54,9 @@ export const processVoiceCommand = onCall({ timeoutSeconds: 60 }, async (request
   }
 
   try {
-    // Phase 2 Placeholder: LLM logic
-    return {
-      title: transcript || 'Placholder Task from Voice',
-      dueDate: new Date().toLocaleDateString('en-CA'),
-      startTime: undefined,
-      endTime: undefined,
-      hasConflict: false,
-    }
+    // Phase 2: Orchestrate LLM parsing and Google Calendar check
+    const parsedTask = await parseTaskWithGemini(transcript, timezone, accessToken)
+    return parsedTask
   } catch (error) {
     console.error('Error processing voice command LLM:', error)
     throw new HttpsError('internal', 'Failed to parse task from transcript.')

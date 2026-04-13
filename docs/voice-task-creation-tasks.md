@@ -10,12 +10,12 @@
   - **Verify**: Write a simple unit test or invoke via emulator shell to verify basic transcription logic.
   - **Files**: `functions/src/processVoiceCommand.ts`
 
-- `[ ]` **Task: Define Gemini Tool and Calendar API wrapper**
+- `[x]` **Task: Define Gemini Tool and Calendar API wrapper**
   - **Acceptance**: A helper function is written to query the user's Google Calendar using `googleapis`. This wrapper is cleanly defined as a tool for the Gemini SDK.
   - **Verify**: TypeScript compiles successfully; verify calendar API scope requirements.
   - **Files**: `functions/src/processVoiceCommand.ts`, `src/lib/googleCalendar.ts` (if code sharing applies)
 
-- `[ ]` **Task: Prompt Engineering & Response Parsing**
+- `[x]` **Task: Prompt Engineering & Response Parsing**
   - **Acceptance**: Gemini is invoked with the transcript and tool. It correctly identifies the standard task variables and detects conflicts to generate a funny, short warning message. It returns typed JSON matching `ParsedTaskResponse`.
   - **Verify**: Test within Firebase emulator using simulated STT text resolving to a mock calendar busy slot.
   - **Files**: `functions/src/processVoiceCommand.ts`
