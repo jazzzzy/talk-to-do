@@ -120,7 +120,7 @@ export default function AddTaskModal({ open, onClose, onAdd }: Props) {
                   placeholder="e.g. Design app icon…"
                   required
                   maxLength={200}
-                  className="w-full max-w-full box-border bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white text-sm placeholder-white/20 focus:outline-none focus:border-indigo-400/50 focus:bg-white/10 transition-all shadow-inner"
+                  className="w-full min-w-0 box-border bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-sm placeholder-white/20 focus:outline-none focus:border-indigo-400/50 focus:bg-white/10 transition-all shadow-inner"
                 />
               </div>
 
@@ -140,7 +140,7 @@ export default function AddTaskModal({ open, onClose, onAdd }: Props) {
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
                     required
-                    className="w-full max-w-full box-border bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white text-sm focus:outline-none focus:border-indigo-400/50 transition-all shadow-inner"
+                    className="w-full min-w-0 box-border bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-sm focus:outline-none focus:border-indigo-400/50 transition-all shadow-inner"
                     style={{ colorScheme: 'dark' }}
                   />
                 </div>
@@ -162,7 +162,7 @@ export default function AddTaskModal({ open, onClose, onAdd }: Props) {
                         setStartTime(e.target.value)
                         if (!e.target.value) setEndTime('')
                       }}
-                      className="w-full max-w-full bg-white/5 border border-white/10 rounded-2xl px-3 py-4 text-white text-sm focus:outline-none focus:border-indigo-400/50 transition-all shadow-inner"
+                      className="w-full min-w-0 box-border bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-sm focus:outline-none focus:border-indigo-400/50 transition-all shadow-inner"
                       style={{ colorScheme: 'dark' }}
                     />
                   </div>
@@ -180,7 +180,7 @@ export default function AddTaskModal({ open, onClose, onAdd }: Props) {
                       value={endTime}
                       onChange={(e) => setEndTime(e.target.value)}
                       disabled={!startTime}
-                      className="w-full max-w-full bg-white/5 border border-white/10 rounded-2xl px-3 py-4 text-white text-sm focus:outline-none focus:border-indigo-400/50 disabled:opacity-30 disabled:grayscale transition-all shadow-inner"
+                      className="w-full min-w-0 box-border bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-sm focus:outline-none focus:border-indigo-400/50 disabled:opacity-30 disabled:grayscale transition-all shadow-inner"
                       style={{ colorScheme: 'dark' }}
                     />
                   </div>
