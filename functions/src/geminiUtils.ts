@@ -111,7 +111,7 @@ Rules:
 
   try {
     const chat = ai.chats.create({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       config: {
         systemInstruction,
         tools: accessToken ? [calendarTool] : [], // Only supply tool if we have an auth token
@@ -143,7 +143,7 @@ Rules:
     // structured output best as a distinct generation step).
     const history = await chat.getHistory()
     const finalJSONResponse = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       contents: [...history, { role: 'user', parts: [{ text: 'Output the final parsed task as JSON according to the schema.' }] }],
       config: {
         responseMimeType: 'application/json',
