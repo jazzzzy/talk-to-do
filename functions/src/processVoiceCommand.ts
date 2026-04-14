@@ -25,7 +25,7 @@ export const processVoiceCommand = onCall({
     throw new HttpsError('unauthenticated', 'User must be authenticated to process voice commands.')
   }
 
-  const { audioBase64, timezone, accessToken } = request.data
+  const { audioBase64, timezone, accessToken, languageCode } = request.data
 
   if (!audioBase64) {
     throw new HttpsError('invalid-argument', 'Missing audioBase64 payload.')
@@ -42,7 +42,7 @@ export const processVoiceCommand = onCall({
       config: {
         encoding: 'WEBM_OPUS', // Default format from modern browsers' MediaRecorder
         sampleRateHertz: 48000,
-        languageCode: 'en-US', // Can be parameterized later if i18n is needed
+        languageCode: languageCode || 'en-US', 
       },
     })
 

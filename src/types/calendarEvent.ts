@@ -28,6 +28,7 @@ export interface UserSettings {
   userId: string
   familyCalendarUrl: string // Public iCloud ICS URL
   googleCalendarIds?: string[] // IDs of selected GCal calendars to sync
+  voiceLanguage?: 'en-US' | 'hu-HU'
   updatedAt: number         // Unix timestamp (ms) of last update
 }
 

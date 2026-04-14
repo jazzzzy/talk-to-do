@@ -264,6 +264,37 @@ export default function SettingsModal({ open, onClose }: Props) {
               </div>
             </div>
 
+            {/* Voice Language Section */}
+            <div className="flex flex-col gap-4">
+              <label className="text-white/40 text-[10px] font-bold uppercase tracking-widest pl-1">
+                Voice Command Language
+              </label>
+              <div className="flex gap-2 p-1 bg-white/5 rounded-2xl border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => saveSettings({ voiceLanguage: 'en-US' })}
+                  className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
+                    settings?.voiceLanguage === 'en-US' || !settings?.voiceLanguage
+                      ? 'bg-blue-500 text-white shadow-lg'
+                      : 'text-white/40 hover:text-white/60'
+                  }`}
+                >
+                  🇺🇸 English
+                </button>
+                <button
+                  type="button"
+                  onClick={() => saveSettings({ voiceLanguage: 'hu-HU' })}
+                  className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
+                    settings?.voiceLanguage === 'hu-HU'
+                      ? 'bg-blue-500 text-white shadow-lg'
+                      : 'text-white/40 hover:text-white/60'
+                  }`}
+                >
+                  🇭🇺 Hungarian
+                </button>
+              </div>
+            </div>
+
             {/* Status Messages */}
             {(error || success || syncMessage) && (
               <div className="flex flex-col gap-2">

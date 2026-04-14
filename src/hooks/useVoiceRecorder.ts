@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '@/firebase'
 import { useAuth } from '@/context/AuthContext'
+import { useUserSettings } from '@/hooks/useUserSettings'
 
 export interface ParsedVoiceTask {
   title: string
@@ -18,6 +19,7 @@ export function useVoiceRecorder(onResult: (task: ParsedVoiceTask) => void) {
   const [error, setError] = useState<string | null>(null)
   
   const { googleAccessToken } = useAuth()
+  const { settings } = useUserSettings()
   const mediaRecorder = useRef<MediaRecorder | null>(null)
   const audioChunks = useRef<Blob[]>([])
 
@@ -67,7 +69,8 @@ export function useVoiceRecorder(onResult: (task: ParsedVoiceTask) => void) {
         const response = await processCmd({
           audioBase64: base64data,
           timezone,
-          accessToken: googleAccessToken || undefined
+          accessToken: googleAccessToken || undefined,
+          languageCode: settings?.voiceLanguage || 'en-US'
         })
 
         if (response.data) {
