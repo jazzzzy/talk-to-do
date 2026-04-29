@@ -5,7 +5,7 @@ import type { ParsedVoiceTask } from '@/hooks/useVoiceRecorder'
 interface Props {
   open: boolean
   onClose: () => void
-  onAdd: (title: string, dueDate: string, startTime?: string, endTime?: string) => Promise<void>
+  onAdd: (title: string, dueDate?: string, startTime?: string, endTime?: string) => Promise<void>
   initialData?: ParsedVoiceTask | null
 }
 
@@ -19,7 +19,7 @@ function getLocalToday(): string {
  */
 export default function AddTaskModal({ open, onClose, onAdd, initialData }: Props) {
   const [title, setTitle]       = useState('')
-  const [dueDate, setDueDate]   = useState(getLocalToday())
+  const [dueDate, setDueDate]   = useState<string>('')
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime]     = useState('')
   const [loading, setLoading]   = useState(false)
@@ -31,7 +31,7 @@ export default function AddTaskModal({ open, onClose, onAdd, initialData }: Prop
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 80)
       setTitle(initialData?.title || '')
-      setDueDate(initialData?.dueDate || getLocalToday())
+      setDueDate(initialData?.dueDate || '')
       // Only set times if they are explicitly returned by the parser
       setStartTime(initialData?.startTime || '')
       setEndTime(initialData?.endTime || '')
@@ -50,11 +50,11 @@ export default function AddTaskModal({ open, onClose, onAdd, initialData }: Prop
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!title.trim() || !dueDate) return
+    if (!title.trim()) return
     setLoading(true)
     setError(null)
     try {
-      await onAdd(title.trim(), dueDate, startTime || undefined, endTime || undefined)
+      await onAdd(title.trim(), dueDate || undefined, startTime || undefined, endTime || undefined)
       onClose()
     } catch {
       setError('Could not save task. Please try again.')
@@ -150,7 +150,7 @@ export default function AddTaskModal({ open, onClose, onAdd, initialData }: Prop
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    required
+                    required={false}
                     className="w-full min-w-0 box-border bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-sm focus:outline-none focus:border-indigo-400/50 transition-all shadow-inner"
                     style={{ colorScheme: 'dark' }}
                   />

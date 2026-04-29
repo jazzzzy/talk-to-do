@@ -7,7 +7,7 @@ export interface Task {
   id: string
   userId: string
   title: string
-  dueDate: string           // ISO local date: 'YYYY-MM-DD'
+  dueDate?: string          // ISO local date: 'YYYY-MM-DD' (optional)
   startTime?: string        // 'HH:MM'
   endTime?: string          // 'HH:MM'
   status: 'pending' | 'completed'

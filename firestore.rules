@@ -9,12 +9,12 @@ service cloud.firestore {
       // Allow Create only if:
       // 1. User is authenticated.
       // 2. The userId matches their UID.
-      // 3. Schema validation: title (string, 1-200), status (pending/completed), dueDate (string).
+      // 3. Schema validation: title (string, 1-200), status (pending/completed).
       allow create: if request.auth != null 
                     && request.auth.uid == request.resource.data.userId
                     && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 200
                     && request.resource.data.status in ['pending', 'completed']
-                    && request.resource.data.dueDate is string && request.resource.data.dueDate.size() > 0
+                    && (!('dueDate' in request.resource.data) || request.resource.data.dueDate is string)
                     && request.resource.data.createdAt is int;
 
       // Allow Update only if:
@@ -26,7 +26,7 @@ service cloud.firestore {
                     && request.resource.data.userId == resource.data.userId
                     && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 200
                     && request.resource.data.status in ['pending', 'completed']
-                    && request.resource.data.dueDate is string && request.resource.data.dueDate.size() > 0;
+                    && (!('dueDate' in request.resource.data) || request.resource.data.dueDate is string);
     }
 
     // Phase 5: Family calendar events (written by Cloud Functions, read by clients)

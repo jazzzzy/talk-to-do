@@ -57,14 +57,14 @@ export function subscribeToUserTasks(
 export async function addTask(
   userId: string,
   title: string,
-  dueDate: string,
+  dueDate?: string,
   startTime?: string,
   endTime?: string,
 ): Promise<void> {
   const payload: NewTaskPayload = {
     userId,
     title: title.trim(),
-    dueDate,
+    dueDate: dueDate || undefined,
     startTime: startTime || undefined,
     endTime: endTime || undefined,
     status: 'pending',

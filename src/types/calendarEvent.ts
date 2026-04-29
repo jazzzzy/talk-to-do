@@ -42,7 +42,7 @@ export type TaskSource = 'user' | 'family-shared' | 'google-calendar'
 export interface DisplayTask {
   id: string
   title: string
-  dueDate: string           // 'YYYY-MM-DD'
+  dueDate?: string          // 'YYYY-MM-DD' (optional)
   status: 'pending' | 'completed'
   createdAt: number
   source: TaskSource

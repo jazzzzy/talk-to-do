@@ -49,6 +49,7 @@ export default function HomePage() {
     todayTasks,
     upcomingTasks,
     overdueTasks,
+    genericTasks,
     loading,
     error,
     addTask,
@@ -60,6 +61,7 @@ export default function HomePage() {
   const [modalOpen, setModalOpen]       = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [voiceTaskInit, setVoiceTaskInit] = useState<ParsedVoiceTask | null>(null)
+  const [isGenericExpanded, setIsGenericExpanded] = useState(false)
 
   /* ── Handlers ───────────────────────────────────────────── */
   const handleVoiceResult = (task: ParsedVoiceTask) => {
@@ -85,7 +87,7 @@ export default function HomePage() {
     catch (e) { console.error('[HomePage] delete error', e) }
   }
 
-  const handleAdd = async (title: string, dueDate: string, startTime?: string, endTime?: string) => {
+  const handleAdd = async (title: string, dueDate?: string, startTime?: string, endTime?: string) => {
     await addTask(title, dueDate, startTime, endTime)
   }
 
@@ -93,13 +95,50 @@ export default function HomePage() {
   const renderTasksView = () => {
     const hasToday    = todayTasks.length > 0
     const hasUpcoming = upcomingTasks.length > 0
+    const hasGeneric  = genericTasks.length > 0
 
-    if (!hasToday && !hasUpcoming) {
-      return <EmptyState view="tasks" /> // Falls back to caught up message
+    if (!hasToday && !hasUpcoming && !hasGeneric) {
+      return <EmptyState view="tasks" />
     }
 
     return (
       <div className="flex flex-col gap-3 pt-2">
+        {/* Generic Tasks Section (Expandable) */}
+        {hasGeneric && (
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => setIsGenericExpanded(!isGenericExpanded)}
+              className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/8 transition-all active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">📥</span>
+                <span className="text-sm font-semibold text-white/90">Generic Tasks</span>
+                <span className="bg-white/10 px-2 py-0.5 rounded-full text-[10px] font-bold text-white/40">
+                  {genericTasks.length}
+                </span>
+              </div>
+              <span className={`text-white/30 transition-transform duration-300 ${isGenericExpanded ? 'rotate-180' : ''}`}>
+                ▾
+              </span>
+            </button>
+
+            {isGenericExpanded && (
+              <ul className="flex flex-col gap-3 mt-1 animate-task-in" role="list" aria-label="Generic tasks">
+                {genericTasks.map((task, i) => (
+                  <li key={task.id}>
+                    <TaskCard
+                      task={task}
+                      index={i}
+                      onToggle={() => handleToggle(task)}
+                      onDelete={() => handleDelete(task)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
         {/* Today Section */}
         {hasToday && (
           <ul className="flex flex-col gap-3" role="list" aria-label="Today's tasks">
@@ -116,8 +155,8 @@ export default function HomePage() {
           </ul>
         )}
 
-        {/* Separator — thin but distinctive line */}
-        {hasToday && hasUpcoming && (
+        {/* Separator */}
+        {(hasToday || hasGeneric) && hasUpcoming && (
           <div className="relative py-4 px-2">
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[1px] bg-white/10" />
             <span className="relative z-10 bg-[#0f0c29]/50 backdrop-blur-sm px-3 text-[10px] font-bold text-white/20 uppercase tracking-widest rounded-full border border-white/5 ml-2">

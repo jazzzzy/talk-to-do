@@ -6,7 +6,7 @@ import { useUserSettings } from '@/hooks/useUserSettings'
 
 export interface ParsedVoiceTask {
   title: string
-  dueDate: string
+  dueDate?: string
   startTime?: string
   endTime?: string
   hasConflict: boolean

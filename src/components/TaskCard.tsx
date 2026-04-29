@@ -152,7 +152,9 @@ export default function TaskCard({ task, onToggle, onDelete, index = 0 }: Props)
 /* ─── Helpers ─────────────────────────────────────────────── */
 
 /** Formats 'YYYY-MM-DD' into a human-readable label relative to today. */
-function formatDueDate(dueDate: string): string {
+function formatDueDate(dueDate?: string): string {
+  if (!dueDate) return 'No deadline'
+
   const today    = new Date().toLocaleDateString('en-CA')
   const tomorrow = new Date(Date.now() + 86_400_000).toLocaleDateString('en-CA')
 

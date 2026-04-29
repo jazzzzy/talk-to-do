@@ -46,10 +46,11 @@ export interface UseTasksReturn {
   todayTasks: DisplayTask[]
   upcomingTasks: DisplayTask[]
   overdueTasks: DisplayTask[]
+  genericTasks: DisplayTask[]
   loading: boolean
   error: Error | null
   // CRUD operations bound to the current user (only for user-created tasks)
-  addTask: (title: string, dueDate: string, startTime?: string, endTime?: string) => Promise<void>
+  addTask: (title: string, dueDate?: string, startTime?: string, endTime?: string) => Promise<void>
   toggleTaskStatus: (taskId: string, currentStatus: Task['status']) => Promise<void>
   deleteTask: (taskId: string) => Promise<void>
 }
@@ -98,10 +99,18 @@ export function useTasks(familyDisplayTasks: DisplayTask[] = []): UseTasksReturn
   const allTasks: DisplayTask[] = useMemo(() => {
     const userDisplayTasks = rawTasks.map(taskToDisplayTask)
     const merged = [...userDisplayTasks, ...familyDisplayTasks]
-    // Sort by dueDate ascending, then by createdAt descending
+    // Sort by dueDate ascending, then by createdAt descending.
+    // Tasks with no dueDate (generic) are sorted at the very end of the base list
+    // (though they are filtered into their own view anyway).
     return merged.sort((a, b) => {
-      const dateCompare = a.dueDate.localeCompare(b.dueDate)
-      if (dateCompare !== 0) return dateCompare
+      if (a.dueDate && b.dueDate) {
+        const dateCompare = a.dueDate.localeCompare(b.dueDate)
+        if (dateCompare !== 0) return dateCompare
+      } else if (a.dueDate) {
+        return -1
+      } else if (b.dueDate) {
+        return 1
+      }
       return b.createdAt - a.createdAt
     })
   }, [rawTasks, familyDisplayTasks])
@@ -116,23 +125,28 @@ export function useTasks(familyDisplayTasks: DisplayTask[] = []): UseTasksReturn
   )
 
   const upcomingTasks: DisplayTask[] = useMemo(
-    () => allTasks.filter((t) => t.dueDate > today),
+    () => allTasks.filter((t) => !!t.dueDate && t.dueDate > today),
     [allTasks, today],
   )
 
   const overdueTasks: DisplayTask[] = useMemo(
-    () => allTasks.filter((t) => t.dueDate < today && t.status === 'pending'),
+    () => allTasks.filter((t) => !!t.dueDate && t.dueDate < today && t.status === 'pending'),
     [allTasks, today],
+  )
+
+  const genericTasks: DisplayTask[] = useMemo(
+    () => allTasks.filter((t) => !t.dueDate),
+    [allTasks],
   )
 
   // Bind repository calls to the current user so callers don't need to
   // pass userId explicitly.
-  const addTask = async (title: string, dueDate: string, startTime?: string, endTime?: string) => {
+  const addTask = async (title: string, dueDate?: string, startTime?: string, endTime?: string) => {
     if (!user) throw new Error('Not authenticated')
     // Save to Firestore first so the task appears immediately in the UI
     await repoAddTask(user.uid, title, dueDate, startTime, endTime)
-    // Mirror to Google Calendar in the background — don't block the UI
-    if (googleAccessToken) {
+    // Mirror to Google Calendar in the background — only if dueDate is present
+    if (googleAccessToken && dueDate) {
       const payload = buildUserTaskPayload(title, dueDate, startTime, endTime)
       createGCalEvent(googleAccessToken, payload).then((gcalId) => {
         if (gcalId) {
@@ -157,6 +171,7 @@ export function useTasks(familyDisplayTasks: DisplayTask[] = []): UseTasksReturn
     todayTasks,
     upcomingTasks,
     overdueTasks,
+    genericTasks,
     loading,
     error,
     addTask,

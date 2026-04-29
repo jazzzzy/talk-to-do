@@ -3,7 +3,7 @@ import axios from 'axios'
 
 export interface ParsedVoiceTask {
   title: string
-  dueDate: string
+  dueDate?: string
   startTime?: string
   endTime?: string
   hasConflict: boolean
@@ -71,13 +71,13 @@ const taskResponseSchema = {
   type: Type.OBJECT,
   properties: {
     title: { type: Type.STRING, description: 'Short actionable title' },
-    dueDate: { type: Type.STRING, description: 'YYYY-MM-DD' },
-    startTime: { type: Type.STRING, description: 'HH:MM in 24hr format. Leave empty if unstated.' },
-    endTime: { type: Type.STRING, description: 'HH:MM in 24hr format. Leave empty if unstated.' },
+    dueDate: { type: Type.STRING, description: 'YYYY-MM-DD. Omit this field if no date is mentioned.' },
+    startTime: { type: Type.STRING, description: 'HH:MM in 24hr format. Omit if unstated.' },
+    endTime: { type: Type.STRING, description: 'HH:MM in 24hr format. Omit if unstated.' },
     hasConflict: { type: Type.BOOLEAN, description: 'True if the calendar check tool revealed an overlap' },
     conflictWarning: { type: Type.STRING, description: 'A short, funny warning if a conflict exists. Otherwise empty.' },
   },
-  required: ['title', 'dueDate', 'hasConflict'],
+  required: ['title', 'hasConflict'],
 }
 
 /**
@@ -104,9 +104,10 @@ Rules:
 1. Extract standard task details from the voice transcript.
 2. The transcript may be in any language (e.g., Hungarian or English). Extract the core information accurately into the English-keyed JSON schema.
 3. Handle Hungarian date formats (e.g., "holnapután", "jövő kedden") by mapping them to ISO dates based on the current user time.
-4. If time constraints are mentioned, invoke the checkGoogleCalendar tool to see if the user is busy.
-5. Output the final task details strictly matching the JSON schema.
-6. If the tool indicates a calendar conflict, set hasConflict=true and write a very short, humorous conflictWarning telling them they're double-booked.
+4. If no specific date is mentioned in the transcript (e.g., "Buy milk"), DO NOT include the dueDate, startTime, or endTime fields in the output.
+5. If time constraints are mentioned, invoke the checkGoogleCalendar tool to see if the user is busy.
+6. Output the final task details strictly matching the JSON schema.
+7. If the tool indicates a calendar conflict, set hasConflict=true and write a very short, humorous conflictWarning telling them they're double-booked.
   `
 
   console.log(`[GeminiUtils] Initiating LLM parse for transcript: "${transcript}"`)
